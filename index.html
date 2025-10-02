@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Previsão do Tempo - ECMWF</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f0f0f0;
+        }
+
+        h1,
+        h2 {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .cards {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr; /* padrão: 3 colunas */
+            gap: 10px;
+            margin-bottom: 50px;
+        }
+
+        .card {
+            padding: 10px;
+            background-color: white;
+            text-align: left;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .bold {
+            font-weight: bold;
+        }
+
+        #location {
+            margin-bottom: 60px;
+            font-size: 1.2em;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        #search-box {
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        #search-box input {
+            padding: 5px;
+            font-size: 1em;
+            width: 250px;
+        }
+
+        #search-box button {
+            padding: 5px 10px;
+            font-size: 1em;
+            margin-left: 5px;
+        }
+
+        /* Responsividade */
+        /* até 700px → 2 colunas */
+        @media (max-width: 700px) {
+            #search-box button {
+                margin-top: 8px;
+                width: 150px;
+            }
+
+            .cards {
+                grid-template-columns: 1fr 1fr;
+                gap: 15px; /* mais respiro entre cards */
+            }
+        }
+
+        /* até 450px → 1 coluna */
+        @media (max-width: 450px) {
+            .cards {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Previsão 15 dias - ECMWF</h1>
+
+    <div id="search-box">
+        <input type="text" id="city-input" placeholder="Digite cidade, estado ou país">
+        <button id="search-btn">Buscar</button>
+    </div>
+
+    <div id="location">Carregando localização...</div>
+
+    <h2>Chuva (mm)</h2>
+    <div id="chuva" class="cards"></div>
+
+    <h2>Temperatura (°C)</h2>
+    <div id="temperatura" class="cards"></div>
+
+    <h2>Umidade Relativa do ar (%)</h2>
+    <div id="umidade" class="cards"></div>
+
+    <h2>Vento e Rajadas (km/h)</h2>
+    <div id="vento" class="cards"></div>
+
+    <h2>Trovoadas</h2>
+    <div id="thunder" class="cards"></div>
+
+    <script>
+        // Função para determinar descrição de trovoadas baseada no CAPE
+        function getThunderDescription(cape) {
+            if (cape < 1000) return "sem risco";
+            if (cape < 2000) return "Trovoadas";
+            return "Trovoadas fortes";
+        }
+
+        // Buscar previsão do tempo (dados horários)
+        function fetchWeather(lat, lon) {
+            const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,precipitation,wind_speed_10m,wind_gusts_10m,relative_humidity_2m,cape&models=ecmwf_ifs&timezone=auto&forecast_days=15`;
+
+            fetch(apiUrl)
+                .then(res => res.json())
+                .then(data => {
+                    const times = data.hourly.time;
+                    const temperatures = data.hourly.temperature_2m;
+                    const precipitations = data.hourly.precipitation;
+                    const windSpeeds = data.hourly.wind_speed_10m;
+                    const windGusts = data.hourly.wind_gusts_10m;
+                    const humidity = data.hourly.relative_humidity_2m;
+                    const cape = data.hourly.cape;
+
+                    const dailyData = {};
+
+                    for (let i = 0; i < times.length; i++) {
+                        const date = new Date(times[i]);
+                        const dayKey = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+
+                        if (!dailyData[dayKey]) {
+                            dailyData[dayKey] = {
+                                tempMin: temperatures[i],
+                                tempMax: temperatures[i],
+                                precipSum: precipitations[i],
+                                windMax: windSpeeds[i],
+                                gustMax: windGusts[i],
+                                humMin: humidity[i],
+                                humMax: humidity[i],
+                                capeMax: cape[i]
+                            };
+                        } else {
+                            const d = dailyData[dayKey];
+                            d.tempMin = Math.min(d.tempMin, temperatures[i]);
+                            d.tempMax = Math.max(d.tempMax, temperatures[i]);
+                            d.precipSum += precipitations[i];
+                            d.windMax = Math.max(d.windMax, windSpeeds[i]);
+                            d.gustMax = Math.max(d.gustMax, windGusts[i]);
+                            d.humMin = Math.min(d.humMin, humidity[i]);
+                            d.humMax = Math.max(d.humMax, humidity[i]);
+                            d.capeMax = Math.max(d.capeMax, cape[i]);
+                        }
+                    }
+
+                    document.getElementById('chuva').innerHTML = '';
+                    document.getElementById('temperatura').innerHTML = '';
+                    document.getElementById('vento').innerHTML = '';
+                    document.getElementById('umidade').innerHTML = '';
+                    document.getElementById('thunder').innerHTML = '';
+
+                    const dayNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+
+                    Object.keys(dailyData).forEach(dayKey => {
+                        const [year, month, day] = dayKey.split('-');
+                        const dateObj = new Date(year, month - 1, day);
+                        const dayName = dayNames[dateObj.getDay()];
+                        const formattedDate = `${dateObj.getDate()}/${dateObj.getMonth() + 1}`;
+                        const d = dailyData[dayKey];
+
+                        function createCard(label, value) {
+                            const card = document.createElement('div');
+                            card.classList.add('card');
+                            card.innerHTML = `<span class="bold">${label}</span><span>${value}</span>`;
+                            return card;
+                        }
+
+                        document.getElementById('chuva').appendChild(createCard(`${dayName}, ${formattedDate}`, `${Math.round(d.precipSum)} mm`));
+                        document.getElementById('temperatura').appendChild(createCard(`${dayName}, ${formattedDate}`, `${Math.round(d.tempMin)} a ${Math.round(d.tempMax)}`));
+                        document.getElementById('umidade').appendChild(createCard(`${dayName}, ${formattedDate}`, `${Math.round(d.humMin)} a ${Math.round(d.humMax)}`));
+                        document.getElementById('vento').appendChild(createCard(`${dayName}, ${formattedDate}`, `${Math.round(d.windMax)} e ${Math.round(d.gustMax)}`));
+                        document.getElementById('thunder').appendChild(createCard(`${dayName}, ${formattedDate}`, getThunderDescription(d.capeMax)));
+                    });
+                })
+                .catch(err => console.error("Erro ao buscar dados:", err));
+        }
+
+        // Buscar localização pelo Nominatim
+        function fetchLocationName(lat, lon) {
+            const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}&accept-language=pt`;
+            fetch(url)
+                .then(res => res.json())
+                .then(data => {
+                    let name = "Localização desconhecida";
+                    if (data.address) {
+                        const city = data.address.city || data.address.town || data.address.village || "";
+                        const state = data.address.state || "";
+                        const country = data.address.country || "";
+                        name = city ? city : "";
+                        if (state) name += name ? `, ${state}` : state;
+                        if (country) name += name ? `, ${country}` : country;
+                    }
+                    document.getElementById('location').textContent = "📌 " + name;
+                })
+                .catch(err => {
+                    console.error("Erro ao buscar localização:", err);
+                    document.getElementById('location').textContent = "Localização desconhecida";
+                });
+        }
+
+        // Buscar cidade pelo Nominatim
+        function searchCity(city) {
+            const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(city)}&accept-language=pt`;
+            fetch(url)
+                .then(res => res.json())
+                .then(data => {
+                    if (data && data.length > 0) {
+                        const lat = data[0].lat;
+                        const lon = data[0].lon;
+                        fetchLocationName(lat, lon);
+                        fetchWeather(lat, lon);
+                    } else {
+                        alert("Cidade não encontrada.");
+                    }
+                })
+                .catch(err => console.error("Erro na busca da cidade:", err));
+        }
+
+        // Geolocalização automática
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(position => {
+                const lat = position.coords.latitude;
+                const lon = position.coords.longitude;
+                fetchLocationName(lat, lon);
+                fetchWeather(lat, lon);
+            }, error => {
+                console.error("Geolocalização falhou:", error);
+                const lat = -9.7811;
+                const lon = -36.0936;
+                fetchLocationName(lat, lon);
+                fetchWeather(lat, lon);
+            });
+        } else {
+            console.error("Geolocalização não suportada");
+            const lat = -9.7811;
+            const lon = -36.0936;
+            fetchLocationName(lat, lon);
+            fetchWeather(lat, lon);
+        }
+
+        // Botão de busca
+        document.getElementById('search-btn').addEventListener('click', () => {
+            const city = document.getElementById('city-input').value.trim();
+            if (city) searchCity(city);
+        });
+    </script>
+
+</body>
+</html>

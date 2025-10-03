@@ -46,23 +46,28 @@
             font-size: 1.2em;
             font-weight: bold;
             text-align: center;
+            background-color: #cfcfcf;
+            padding: 10px;
         }
 
         #search-box {
             margin-bottom: 15px;
             text-align: center;
+            
         }
 
         #search-box input {
             padding: 5px;
             font-size: 1em;
             width: 250px;
+            font-family: "Ubuntu", sans-serif;
         }
 
         #search-box button {
             padding: 5px 10px;
             font-size: 1em;
             margin-left: 5px;
+            font-family: "Ubuntu", sans-serif;
         }
 
         /* GRID das métricas (2 colunas no desktop, 1 no mobile) */
@@ -206,7 +211,7 @@
                     document.getElementById('umidade').innerHTML = '';
                     document.getElementById('thunder').innerHTML = '';
 
-                    const dayNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+                    const dayNames = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
 
                     Object.keys(dailyData).forEach(dayKey => {
                         const [year, month, day] = dayKey.split('-');

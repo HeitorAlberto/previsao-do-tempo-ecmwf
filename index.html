@@ -18,56 +18,7 @@
         h2 {
             margin-top: 20px;
             text-align: center;
-            font-size: 16px;
-        }
-
-        .cards {
-            display: grid;
-            grid-template-columns: 1fr; /* uma coluna por padrão */
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        /* Cards */
-        .card {
-            background-color: white;
-            border-radius: 8px;
-            padding: 6px 12px;
-            display: flex;
-            flex-direction: row; /* horizontal no desktop */
-            justify-content: space-between;
-            align-items: center;
-            width: 90%;
-            max-width: 700px;
-            min-width: 250px;
-            margin: 0 auto;
-        }
-
-        /* Grupo de métricas dentro do card */
-        .info-group {
-            display: flex;
-            gap: 10px;
-        }
-
-        .card p {
-            margin: 0;
-            padding: 2px 6px;
-            border-radius: 5px;
-            font-size: 14px;
-        }
-
-        .dia-data {
-            font-weight: 800;
-        }
-
-        #location {
-            margin-top: 50px;
-            margin-bottom: 50px;
-            font-size: 16px;
-            font-weight: bold;
-            text-align: center;
-            background-color: #cfcfcf;
-            padding: 10px;
+            font-size: 18px;
         }
 
         #search-box {
@@ -78,25 +29,31 @@
         #search-box input {
             font-size: 16px;
             width: 250px;
+            padding: 8px;
             font-family: "Ubuntu", sans-serif;
         }
 
         #search-box button {
             font-size: 16px;
             margin-left: 5px;
+            padding: 8px 12px;
             font-family: "Ubuntu", sans-serif;
+        }
+
+        #location {
+            margin: 30px 0;
+            font-size: 18px;
+            font-weight: bold;
+            text-align: center;
+            background-color: #cfcfcf;
+            padding: 10px;
         }
 
         .metricas-grid {
             display: grid;
             grid-template-columns: 1fr;
             gap: 30px;
-            align-items: start;
-            justify-content: center;
-        }
-
-        .metrica {
-            max-width: 900px;
+            max-width: 1000px;
             margin: 0 auto;
         }
 
@@ -105,23 +62,78 @@
             margin-bottom: 10px;
         }
 
-        /* --- CORES DAS MÉTRICAS --- */
+        /* Cards */
+        .cards {
+            display: flex;
+            flex-direction: column; /* um card por linha */
+            gap: 12px;
+            width: 100%;
+        }
+
+        .card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 12px;
+            display: flex;
+            flex-direction: row; /* mantém horizontal sempre */
+            justify-content: space-between;
+            align-items: center;
+            width: 100%; /* ocupa toda largura do container */
+            max-width: 500px; /* desktop */
+            min-width: 250px; /* celular */
+            margin: 0 auto;
+            box-sizing: border-box;
+        }
+
+        .info-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: nowrap; /* não quebra os elementos */
+            justify-content: flex-end;
+        }
+
+        .card p {
+            margin: 0;
+            padding: 4px 8px;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .dia-data {
+            font-weight: 800;
+        }
+
+        /* Cores das métricas */
         .chuva {
-            background-color: #b3d9ff;
+            background-color: #c3e1ff;
         }
 
         .temp {
-            background-color: #ffd9b3;
+            background-color: #ffe5cb;
         }
 
         .umid {
-            background-color: #cce5ff;
+            background-color: #c3e1ff;
         }
 
         .vento {
-            background-color: #b3ffcc;
+            background-color: #c4ffd8;
         }
 
+        /* Responsividade */
+        @media (max-width: 600px) {
+            .card {
+                width: 95%;
+                max-width: none;
+                padding: 10px;
+            }
+            .card p {
+                font-size: 14px; /* mantém legível */
+            }
+            #search-box input {
+                width: 80%;
+            }
+        }
     </style>
 </head>
 
@@ -160,7 +172,7 @@
             fetch(apiUrl)
                 .then(res => res.json())
                 .then(data => {
-                    if (!data || !data.hourly || !data.hourly.time) return;
+                    if (!data?.hourly?.time) return;
 
                     const { time, temperature_2m, precipitation, wind_speed_10m, wind_gusts_10m, relative_humidity_2m } = data.hourly;
                     const dailyData = {};
@@ -281,5 +293,4 @@
         });
     </script>
 </body>
-
 </html>

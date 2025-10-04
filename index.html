@@ -191,7 +191,7 @@
         </div>
 
         <div class="metrica">
-            <h2>Risco de Trovoadas</h2>
+            <h2>Chance de Trovoadas</h2>
             <div id="trovoadas" class="cards"></div>
         </div>
     </div>
@@ -204,8 +204,8 @@
 
         function getThunderRisk(cape) {
             if (cape == null) return "—";
-            if (cape < 1000) return "sem risco";
-            if (cape < 2000) return "trovoadas";
+            if (cape < 1000) return "sem chance";
+            if (cape < 2000) return "trovoadas isoladas";
             return "trovoadas fortes";
         }
 

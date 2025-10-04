@@ -14,11 +14,16 @@
             background-color: #f0f0f0;
         }
 
-        h1,
+        h1 {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 28px;
+        }
+
         h2 {
             margin-top: 20px;
             text-align: center;
-            font-size: 18px;
+            font-size: 22px;
         }
 
         #search-box {
@@ -27,14 +32,14 @@
         }
 
         #search-box input {
-            font-size: 16px;
-            width: 250px;
+            font-size: 22px;
+            width: 450px;
             padding: 8px;
             font-family: "Ubuntu", sans-serif;
         }
 
         #search-box button {
-            font-size: 16px;
+            font-size: 22px;
             margin-left: 5px;
             padding: 8px 12px;
             font-family: "Ubuntu", sans-serif;
@@ -42,10 +47,9 @@
 
         #location {
             margin: 30px 0;
-            font-size: 18px;
+            font-size: 22px;
             font-weight: bold;
             text-align: center;
-            background-color: #cfcfcf;
             padding: 10px;
         }
 
@@ -79,7 +83,8 @@
             justify-content: space-between;
             align-items: center;
             width: 100%;
-            max-width: 700px; /* desktop maior */
+            max-width: 700px;
+            /* desktop maior */
             min-width: 250px;
             margin: 0 auto;
             box-sizing: border-box;
@@ -96,47 +101,61 @@
             margin: 0;
             padding: 6px 10px;
             border-radius: 5px;
-            font-size: 16px; /* aumento da fonte */
+            font-size: 22px;
         }
 
         .dia-data {
-            font-weight: 800;
-            font-size: 18px; /* maior destaque para dia/data */
+            font-weight: bolder;
+            font-size: 22px;
+            /* maior destaque para dia/data */
         }
 
         /* Cores das métricas */
         .chuva {
-            color: #003eea;
+            background-color: #386dff;
+            color: white;
             font-weight: 500;
         }
 
         .temp {
-            color: #ff5a13;
+            background-color: #ff753a;
+            color: white;
             font-weight: 500;
         }
 
         .umid {
-            color: #1c58ff;
+            background-color: #386dff;
+            color: white;
             font-weight: 500;
         }
 
         .vento {
-            color: #1cd300;
+            background-color: #1cd300;
+            color: white;
             font-weight: 500;
         }
 
         .trovoadas {
-            color: #ff8000;
+            background-color: #ffce6b;
+            color: black;
             font-weight: 500;
         }
 
         /* Responsividade celular */
         @media (max-width: 600px) {
 
-            body {padding: 0px; margin: 0px;}
+            body {
+                padding: 0px;
+                margin: 0px;
+            }
+
+            #search-box input {border-radius: 10px; padding: 14px;}
+
+            #search-box button {width: 120px; border-radius: 10px;}
 
             .card {
-                width: 100%; /* ocupa toda a largura do body */
+                width: 100%;
+                /* ocupa toda a largura do body */
                 max-width: none;
                 padding: 12px 14px;
                 flex-direction: row;
@@ -163,7 +182,9 @@
                 padding: 8px 12px;
             }
 
-            .metricas-grid {width: 100%;}
+            .metricas-grid {
+                width: 100%;
+            }
         }
     </style>
 </head>
@@ -181,7 +202,7 @@
 
     <div class="metricas-grid">
         <div class="metrica">
-            <h2>Chuva e Temperatura</h2>
+            <h2>Chuva (mm) e Temperatura (°C)</h2>
             <div id="chuva" class="cards"></div>
         </div>
 
@@ -220,7 +241,7 @@
                 const [y, m, d] = key.split('-');
                 const dateObj = new Date(y, m - 1, d);
                 const dayName = dayNames[dateObj.getDay()];
-                const dateFmt = `${String(dateObj.getDate()).padStart(2,'0')}/${String(dateObj.getMonth()+1).padStart(2,'0')}`;
+                const dateFmt = `${String(dateObj.getDate()).padStart(2, '0')}/${String(dateObj.getMonth() + 1).padStart(2, '0')}`;
                 const cape = dailyData[key].capeMax || 0;
                 const risk = getThunderRisk(cape);
 
@@ -287,7 +308,7 @@
                         const [y, m, d] = key.split('-');
                         const dateObj = new Date(y, m - 1, d);
                         const nome = dayNames[dateObj.getDay()];
-                        const dataFmt = `${String(dateObj.getDate()).padStart(2,'0')}/${String(dateObj.getMonth()+1).padStart(2,'0')}`;
+                        const dataFmt = `${String(dateObj.getDate()).padStart(2, '0')}/${String(dateObj.getMonth() + 1).padStart(2, '0')}`;
                         const val = dailyData[key];
 
                         const card1 = document.createElement('div');
@@ -296,7 +317,7 @@
                             <p class="dia-data">${nome}, ${dataFmt}</p>
                             <div class="info-group">
                                 <p class="chuva">${Math.round(val.chuva)} mm</p>
-                                <p class="temp">${Math.round(val.tMin)} a ${Math.round(val.tMax)}</p>
+                                <p class="temp">${Math.round(val.tMin)} - ${Math.round(val.tMax)}</p>
                             </div>
                         `;
                         chuvaDiv.appendChild(card1);
@@ -306,7 +327,7 @@
                         card2.innerHTML = `
                             <p class="dia-data">${nome}, ${dataFmt}</p>
                             <div class="info-group">
-                                <p class="umid">${Math.round(val.umidMin)} a ${Math.round(val.umidMax)}</p>
+                                <p class="umid">${Math.round(val.umidMin)} - ${Math.round(val.umidMax)}</p>
                                 <p class="vento">${Math.round(val.vento)} / ${Math.round(val.rajada)}</p>
                             </div>
                         `;
@@ -363,4 +384,5 @@
         });
     </script>
 </body>
+
 </html>

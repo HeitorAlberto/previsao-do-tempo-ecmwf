@@ -65,7 +65,7 @@
         /* Cards */
         .cards {
             display: flex;
-            flex-direction: column; /* um card por linha */
+            flex-direction: column;
             gap: 12px;
             width: 100%;
         }
@@ -75,12 +75,12 @@
             border-radius: 8px;
             padding: 12px;
             display: flex;
-            flex-direction: row; /* mantém horizontal sempre */
+            flex-direction: row;
             justify-content: space-between;
             align-items: center;
-            width: 100%; /* ocupa toda largura do container */
-            max-width: 500px; /* desktop */
-            min-width: 250px; /* celular */
+            width: 100%;
+            max-width: 600px;
+            min-width: 250px;
             margin: 0 auto;
             box-sizing: border-box;
         }
@@ -88,7 +88,7 @@
         .info-group {
             display: flex;
             gap: 10px;
-            flex-wrap: nowrap; /* não quebra os elementos */
+            flex-wrap: nowrap;
             justify-content: flex-end;
         }
 
@@ -105,19 +105,29 @@
 
         /* Cores das métricas */
         .chuva {
-            background-color: #c3e1ff;
+            color: #003eea;
+            font-weight: 500;
         }
 
         .temp {
-            background-color: #ffe5cb;
+            color: #ff5a13;
+            font-weight: 500;
         }
 
         .umid {
-            background-color: #c3e1ff;
+            color: #1c58ff;
+            font-weight: 500;
         }
 
         .vento {
-            background-color: #c4ffd8;
+            color: #1cd300;
+            font-weight: 500;
+        }
+
+        .trovoadas {
+            color: #ff8000;
+            font-weight: 500;
+
         }
 
         /* Responsividade */
@@ -127,9 +137,15 @@
                 max-width: none;
                 padding: 10px;
             }
+
+            #search-box input {text-align: center;}
+
+            #search-box button {margin-top: 10px;}
+
             .card p {
-                font-size: 14px; /* mantém legível */
+                font-size: 14px;
             }
+
             #search-box input {
                 width: 80%;
             }
@@ -142,7 +158,7 @@
     <h1>Previsão 15 dias - ECMWF</h1>
 
     <div id="search-box">
-        <input type="text" id="city-input" placeholder="Digite cidade, estado ou país">
+        <input type="text" id="city-input" placeholder="Digite a cidade">
         <button id="search-btn">Buscar</button>
     </div>
 
@@ -158,12 +174,50 @@
             <h2>Umidade (%) e Vento/Rajadas (km/h)</h2>
             <div id="umidade" class="cards"></div>
         </div>
+
+        <div class="metrica">
+            <h2>Risco de Trovoadas</h2>
+            <div id="trovoadas" class="cards"></div>
+        </div>
     </div>
 
     <script>
         function clearIfExists(id) {
             const el = document.getElementById(id);
             if (el) el.innerHTML = '';
+        }
+
+        function getThunderRisk(cape) {
+            if (cape == null) return "—";
+            if (cape < 1000) return "sem risco";
+            if (cape < 2000) return "trovoadas";
+            return "trovoadas fortes";
+        }
+
+        function updateThunderCards(dailyData) {
+            const dayNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+            const sortedKeys = Object.keys(dailyData).sort((a, b) => new Date(a) - new Date(b));
+            const thunderDiv = document.getElementById('trovoadas');
+            thunderDiv.innerHTML = '';
+
+            sortedKeys.forEach(key => {
+                const [y, m, d] = key.split('-');
+                const dateObj = new Date(y, m - 1, d);
+                const dayName = dayNames[dateObj.getDay()];
+                const dateFmt = `${String(dateObj.getDate()).padStart(2,'0')}/${String(dateObj.getMonth()+1).padStart(2,'0')}`;
+                const cape = dailyData[key].capeMax || 0;
+                const risk = getThunderRisk(cape);
+
+                const card = document.createElement('div');
+                card.classList.add('card');
+                card.innerHTML = `
+                    <p class="dia-data">${dayName}, ${dateFmt}</p>
+                    <div class="info-group">
+                        <p class="trovoadas">${risk}</p>
+                    </div>
+                `;
+                thunderDiv.appendChild(card);
+            });
         }
 
         function fetchWeather(lat, lon) {
@@ -174,7 +228,7 @@
                 .then(data => {
                     if (!data?.hourly?.time) return;
 
-                    const { time, temperature_2m, precipitation, wind_speed_10m, wind_gusts_10m, relative_humidity_2m } = data.hourly;
+                    const { time, temperature_2m, precipitation, wind_speed_10m, wind_gusts_10m, relative_humidity_2m, cape } = data.hourly;
                     const dailyData = {};
 
                     for (let i = 0; i < time.length; i++) {
@@ -188,7 +242,8 @@
                                 umidMin: relative_humidity_2m[i],
                                 umidMax: relative_humidity_2m[i],
                                 vento: wind_speed_10m[i],
-                                rajada: wind_gusts_10m[i]
+                                rajada: wind_gusts_10m[i],
+                                capeMax: cape[i] || 0
                             };
                         } else {
                             const d = dailyData[key];
@@ -199,6 +254,7 @@
                             d.umidMax = Math.max(d.umidMax, relative_humidity_2m[i]);
                             d.vento = Math.max(d.vento, wind_speed_10m[i]);
                             d.rajada = Math.max(d.rajada, wind_gusts_10m[i]);
+                            d.capeMax = Math.max(d.capeMax, cape[i] || 0);
                         }
                     }
 
@@ -215,21 +271,16 @@
                         const [y, m, d] = key.split('-');
                         const dateObj = new Date(y, m - 1, d);
                         const nome = dayNames[dateObj.getDay()];
-                        const dataFmt = `${String(dateObj.getDate()).padStart(2, '0')}/${String(dateObj.getMonth() + 1).padStart(2, '0')}`;
+                        const dataFmt = `${String(dateObj.getDate()).padStart(2,'0')}/${String(dateObj.getMonth()+1).padStart(2,'0')}`;
                         const val = dailyData[key];
-
-                        const chuva = `${Math.round(val.chuva)} mm`;
-                        const temp = `${Math.round(val.tMin)} a ${Math.round(val.tMax)}`;
-                        const umid = `${Math.round(val.umidMin)} a ${Math.round(val.umidMax)}`;
-                        const vento = `${Math.round(val.vento)} / ${Math.round(val.rajada)}`;
 
                         const card1 = document.createElement('div');
                         card1.classList.add('card');
                         card1.innerHTML = `
                             <p class="dia-data">${nome}, ${dataFmt}</p>
                             <div class="info-group">
-                                <p class="chuva">${chuva}</p>
-                                <p class="temp">${temp}</p>
+                                <p class="chuva">${Math.round(val.chuva)} mm</p>
+                                <p class="temp">${Math.round(val.tMin)} a ${Math.round(val.tMax)}</p>
                             </div>
                         `;
                         chuvaDiv.appendChild(card1);
@@ -239,12 +290,15 @@
                         card2.innerHTML = `
                             <p class="dia-data">${nome}, ${dataFmt}</p>
                             <div class="info-group">
-                                <p class="umid">${umid}</p>
-                                <p class="vento">${vento}</p>
+                                <p class="umid">${Math.round(val.umidMin)} a ${Math.round(val.umidMax)}</p>
+                                <p class="vento">${Math.round(val.vento)} / ${Math.round(val.rajada)}</p>
                             </div>
                         `;
                         umidDiv.appendChild(card2);
                     });
+
+                    // Atualiza os cards de trovoadas
+                    updateThunderCards(dailyData);
                 });
         }
 
@@ -293,4 +347,5 @@
         });
     </script>
 </body>
+
 </html>

@@ -204,9 +204,10 @@
 
         function getThunderRisk(cape) {
             if (cape == null) return "—";
-            if (cape < 1000) return "sem chance";
+            if (cape < 1000) return "sem chance significativa";
             if (cape < 2000) return "trovoadas isoladas";
-            return "trovoadas fortes";
+            if (cape < 3000) return "Trovoadas fortes";
+            return "trovoadas extremas";
         }
 
         function updateThunderCards(dailyData) {

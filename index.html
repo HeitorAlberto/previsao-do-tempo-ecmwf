@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Previsão do Tempo - ECMWF</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Ubuntu:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap');
 
         body {
             font-family: "Ubuntu", sans-serif;
@@ -18,32 +18,52 @@
         h2 {
             margin-top: 20px;
             text-align: center;
+            font-size: 16px;
         }
 
         .cards {
             display: grid;
-            grid-template-columns: 1fr;
+            grid-template-columns: 1fr; /* uma coluna por padrão */
             gap: 10px;
             margin-bottom: 20px;
         }
 
+        /* Cards */
         .card {
-            padding: 10px;
             background-color: white;
-            text-align: left;
             border-radius: 8px;
+            padding: 6px 12px;
             display: flex;
+            flex-direction: row; /* horizontal no desktop */
             justify-content: space-between;
+            align-items: center;
+            width: 90%;
+            max-width: 700px;
+            min-width: 250px;
+            margin: 0 auto;
         }
 
-        .bold {
-            font-weight: bold;
+        /* Grupo de métricas dentro do card */
+        .info-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .card p {
+            margin: 0;
+            padding: 2px 6px;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .dia-data {
+            font-weight: 800;
         }
 
         #location {
             margin-top: 50px;
             margin-bottom: 50px;
-            font-size: 1.2em;
+            font-size: 16px;
             font-weight: bold;
             text-align: center;
             background-color: #cfcfcf;
@@ -53,29 +73,31 @@
         #search-box {
             margin-bottom: 15px;
             text-align: center;
-            
         }
 
         #search-box input {
-            padding: 5px;
-            font-size: 1em;
+            font-size: 16px;
             width: 250px;
             font-family: "Ubuntu", sans-serif;
         }
 
         #search-box button {
-            padding: 5px 10px;
-            font-size: 1em;
+            font-size: 16px;
             margin-left: 5px;
             font-family: "Ubuntu", sans-serif;
         }
 
-        /* GRID das métricas (2 colunas no desktop, 1 no mobile) */
         .metricas-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1fr;
             gap: 30px;
             align-items: start;
+            justify-content: center;
+        }
+
+        .metrica {
+            max-width: 900px;
+            margin: 0 auto;
         }
 
         .metrica h2 {
@@ -83,33 +105,23 @@
             margin-bottom: 10px;
         }
 
-        /* Responsividade */
-        @media (max-width: 700px) {
-            #search-box button {
-                margin-top: 8px;
-                width: 150px;
-            }
-
-            .cards {
-                grid-template-columns: 1fr 1fr;
-                gap: 15px;
-            }
-
-            .metricas-grid {
-                grid-template-columns: 1fr;
-            }
+        /* --- CORES DAS MÉTRICAS --- */
+        .chuva {
+            background-color: #b3d9ff;
         }
 
-        @media (max-width: 450px) {
-            .card span {
-                font-size: 1.2rem;
-            }
-
-            .cards {
-                grid-template-columns: 1fr;
-                gap: 15px;
-            }
+        .temp {
+            background-color: #ffd9b3;
         }
+
+        .umid {
+            background-color: #cce5ff;
+        }
+
+        .vento {
+            background-color: #b3ffcc;
+        }
+
     </style>
 </head>
 
@@ -124,188 +136,150 @@
 
     <div id="location">Carregando localização...</div>
 
-    <!-- GRID DE MÉTRICAS -->
     <div class="metricas-grid">
         <div class="metrica">
-            <h2>Chuva (mm)</h2>
+            <h2>Chuva e Temperatura</h2>
             <div id="chuva" class="cards"></div>
         </div>
 
         <div class="metrica">
-            <h2>Temperatura (°C)</h2>
-            <div id="temperatura" class="cards"></div>
-        </div>
-
-        <div class="metrica">
-            <h2>Umidade do ar (%)</h2>
+            <h2>Umidade (%) e Vento/Rajadas (km/h)</h2>
             <div id="umidade" class="cards"></div>
-        </div>
-
-        <div class="metrica">
-            <h2>Vento e Rajadas (km/h)</h2>
-            <div id="vento" class="cards"></div>
-        </div>
-
-        <div class="metrica">
-            <h2>Risco de trovoadas</h2>
-            <div id="thunder" class="cards"></div>
         </div>
     </div>
 
     <script>
-        // Função para determinar descrição de trovoadas baseada no CAPE
-        function getThunderDescription(cape) {
-            if (cape < 1000) return "sem risco";
-            if (cape < 2000) return "Trovoadas";
-            return "Trovoadas fortes";
+        function clearIfExists(id) {
+            const el = document.getElementById(id);
+            if (el) el.innerHTML = '';
         }
 
-        // Buscar previsão do tempo (dados horários)
         function fetchWeather(lat, lon) {
-            const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,relative_humidity_2m,dew_point_2m,apparent_temperature,precipitation,rain,showers,snowfall,runoff,visibility,weather_code,et0_fao_evapotranspiration,potential_evapotranspiration,vapour_pressure_deficit,sunshine_duration,cloud_cover_high,cloud_cover_mid,cloud_cover_low,cloud_cover,surface_pressure,pressure_msl,wind_speed_10m,wind_speed_100m,wind_speed_200m,wind_direction_10m,wind_direction_100m,wind_direction_200m,wind_gusts_10m,cape,total_column_integrated_water_vapour,convective_inhibition,soil_moisture_100_to_255cm,soil_moisture_28_to_100cm,soil_moisture_7_to_28cm,soil_moisture_0_to_7cm,soil_temperature_100_to_255cm,soil_temperature_28_to_100cm,soil_temperature_7_to_28cm,soil_temperature_0_to_7cm,surface_temperature&models=ecmwf_ifs&timezone=auto&forecast_days=15`;
+            const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m,wind_gusts_10m,cape&models=ecmwf_ifs&timezone=auto&forecast_days=14`;
 
             fetch(apiUrl)
                 .then(res => res.json())
                 .then(data => {
-                    const times = data.hourly.time;
-                    const temperatures = data.hourly.temperature_2m;
-                    const precipitations = data.hourly.precipitation;
-                    const windSpeeds = data.hourly.wind_speed_10m;
-                    const windGusts = data.hourly.wind_gusts_10m;
-                    const humidity = data.hourly.relative_humidity_2m;
-                    const cape = data.hourly.cape;
+                    if (!data || !data.hourly || !data.hourly.time) return;
 
+                    const { time, temperature_2m, precipitation, wind_speed_10m, wind_gusts_10m, relative_humidity_2m } = data.hourly;
                     const dailyData = {};
 
-                    for (let i = 0; i < times.length; i++) {
-                        const date = new Date(times[i]);
-                        const dayKey = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
-
-                        if (!dailyData[dayKey]) {
-                            dailyData[dayKey] = {
-                                tempMin: temperatures[i],
-                                tempMax: temperatures[i],
-                                precipSum: precipitations[i],
-                                windMax: windSpeeds[i],
-                                gustMax: windGusts[i],
-                                humMin: humidity[i],
-                                humMax: humidity[i],
-                                capeMax: cape[i]
+                    for (let i = 0; i < time.length; i++) {
+                        const date = new Date(time[i]);
+                        const key = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+                        if (!dailyData[key]) {
+                            dailyData[key] = {
+                                tMin: temperature_2m[i],
+                                tMax: temperature_2m[i],
+                                chuva: precipitation[i] || 0,
+                                umidMin: relative_humidity_2m[i],
+                                umidMax: relative_humidity_2m[i],
+                                vento: wind_speed_10m[i],
+                                rajada: wind_gusts_10m[i]
                             };
                         } else {
-                            const d = dailyData[dayKey];
-                            d.tempMin = Math.min(d.tempMin, temperatures[i]);
-                            d.tempMax = Math.max(d.tempMax, temperatures[i]);
-                            d.precipSum += precipitations[i];
-                            d.windMax = Math.max(d.windMax, windSpeeds[i]);
-                            d.gustMax = Math.max(d.gustMax, windGusts[i]);
-                            d.humMin = Math.min(d.humMin, humidity[i]);
-                            d.humMax = Math.max(d.humMax, humidity[i]);
-                            d.capeMax = Math.max(d.capeMax, cape[i]);
+                            const d = dailyData[key];
+                            d.tMin = Math.min(d.tMin, temperature_2m[i]);
+                            d.tMax = Math.max(d.tMax, temperature_2m[i]);
+                            d.chuva += precipitation[i] || 0;
+                            d.umidMin = Math.min(d.umidMin, relative_humidity_2m[i]);
+                            d.umidMax = Math.max(d.umidMax, relative_humidity_2m[i]);
+                            d.vento = Math.max(d.vento, wind_speed_10m[i]);
+                            d.rajada = Math.max(d.rajada, wind_gusts_10m[i]);
                         }
                     }
 
-                    document.getElementById('chuva').innerHTML = '';
-                    document.getElementById('temperatura').innerHTML = '';
-                    document.getElementById('vento').innerHTML = '';
-                    document.getElementById('umidade').innerHTML = '';
-                    document.getElementById('thunder').innerHTML = '';
+                    clearIfExists('chuva');
+                    clearIfExists('umidade');
 
-                    const dayNames = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+                    const dayNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+                    const sortedKeys = Object.keys(dailyData).sort((a, b) => new Date(a) - new Date(b));
 
-                    Object.keys(dailyData).forEach(dayKey => {
-                        const [year, month, day] = dayKey.split('-');
-                        const dateObj = new Date(year, month - 1, day);
-                        const dayName = dayNames[dateObj.getDay()];
-                        const formattedDate = `${dateObj.getDate()}/${dateObj.getMonth() + 1}`;
-                        const d = dailyData[dayKey];
+                    const chuvaDiv = document.getElementById('chuva');
+                    const umidDiv = document.getElementById('umidade');
 
-                        function createCard(label, value) {
-                            const card = document.createElement('div');
-                            card.classList.add('card');
-                            card.innerHTML = `<span class="bold">${label}</span><span>${value}</span>`;
-                            return card;
-                        }
+                    sortedKeys.forEach(key => {
+                        const [y, m, d] = key.split('-');
+                        const dateObj = new Date(y, m - 1, d);
+                        const nome = dayNames[dateObj.getDay()];
+                        const dataFmt = `${String(dateObj.getDate()).padStart(2, '0')}/${String(dateObj.getMonth() + 1).padStart(2, '0')}`;
+                        const val = dailyData[key];
 
-                        document.getElementById('chuva').appendChild(createCard(`${dayName}, ${formattedDate}`, `${Math.round(d.precipSum)} mm`));
-                        document.getElementById('temperatura').appendChild(createCard(`${dayName}, ${formattedDate}`, `${Math.round(d.tempMin)} a ${Math.round(d.tempMax)}`));
-                        document.getElementById('umidade').appendChild(createCard(`${dayName}, ${formattedDate}`, `${Math.round(d.humMin)} a ${Math.round(d.humMax)}`));
-                        document.getElementById('vento').appendChild(createCard(`${dayName}, ${formattedDate}`, `${Math.round(d.windMax)} e ${Math.round(d.gustMax)}`));
-                        document.getElementById('thunder').appendChild(createCard(`${dayName}, ${formattedDate}`, getThunderDescription(d.capeMax)));
+                        const chuva = `${Math.round(val.chuva)} mm`;
+                        const temp = `${Math.round(val.tMin)} a ${Math.round(val.tMax)}`;
+                        const umid = `${Math.round(val.umidMin)} a ${Math.round(val.umidMax)}`;
+                        const vento = `${Math.round(val.vento)} / ${Math.round(val.rajada)}`;
+
+                        const card1 = document.createElement('div');
+                        card1.classList.add('card');
+                        card1.innerHTML = `
+                            <p class="dia-data">${nome}, ${dataFmt}</p>
+                            <div class="info-group">
+                                <p class="chuva">${chuva}</p>
+                                <p class="temp">${temp}</p>
+                            </div>
+                        `;
+                        chuvaDiv.appendChild(card1);
+
+                        const card2 = document.createElement('div');
+                        card2.classList.add('card');
+                        card2.innerHTML = `
+                            <p class="dia-data">${nome}, ${dataFmt}</p>
+                            <div class="info-group">
+                                <p class="umid">${umid}</p>
+                                <p class="vento">${vento}</p>
+                            </div>
+                        `;
+                        umidDiv.appendChild(card2);
                     });
-                })
-                .catch(err => console.error("Erro ao buscar dados:", err));
+                });
         }
 
-        // Buscar localização pelo Nominatim
         function fetchLocationName(lat, lon) {
             const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}&accept-language=pt`;
             fetch(url)
                 .then(res => res.json())
                 .then(data => {
-                    let name = "Localização desconhecida";
-                    if (data.address) {
-                        const city = data.address.city || data.address.town || data.address.village || "";
-                        const state = data.address.state || "";
-                        const country = data.address.country || "";
-                        name = city ? city : "";
-                        if (state) name += name ? `, ${state}` : state;
-                        if (country) name += name ? `, ${country}` : country;
+                    let nome = "Localização desconhecida";
+                    if (data?.address) {
+                        const a = data.address;
+                        nome = `${a.city || a.town || a.village || ""}${a.state ? ", " + a.state : ""}${a.country ? ", " + a.country : ""}`;
                     }
-                    document.getElementById('location').textContent = "📌 " + name;
-                })
-                .catch(err => {
-                    console.error("Erro ao buscar localização:", err);
-                    document.getElementById('location').textContent = "Localização desconhecida";
+                    document.getElementById('location').textContent = "📌 " + nome;
                 });
         }
 
-        // Buscar cidade pelo Nominatim
         function searchCity(city) {
             const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(city)}&accept-language=pt`;
             fetch(url)
-                .then(res => res.json())
-                .then(data => {
-                    if (data && data.length > 0) {
-                        const lat = data[0].lat;
-                        const lon = data[0].lon;
+                .then(r => r.json())
+                .then(d => {
+                    if (d.length > 0) {
+                        const lat = d[0].lat, lon = d[0].lon;
                         fetchLocationName(lat, lon);
                         fetchWeather(lat, lon);
-                    } else {
-                        alert("Cidade não encontrada.");
-                    }
-                })
-                .catch(err => console.error("Erro na busca da cidade:", err));
+                    } else alert("Cidade não encontrada.");
+                });
         }
 
-        // Geolocalização automática
         if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(position => {
-                const lat = position.coords.latitude;
-                const lon = position.coords.longitude;
+            navigator.geolocation.getCurrentPosition(pos => {
+                const { latitude: lat, longitude: lon } = pos.coords;
                 fetchLocationName(lat, lon);
                 fetchWeather(lat, lon);
-            }, error => {
-                console.error("Geolocalização falhou:", error);
-                const lat = -9.7811;
-                const lon = -36.0936;
+            }, () => {
+                const lat = -9.7811, lon = -36.0936;
                 fetchLocationName(lat, lon);
                 fetchWeather(lat, lon);
             });
-        } else {
-            console.error("Geolocalização não suportada");
-            const lat = -9.7811;
-            const lon = -36.0936;
-            fetchLocationName(lat, lon);
-            fetchWeather(lat, lon);
         }
 
-        // Botão de busca
         document.getElementById('search-btn').addEventListener('click', () => {
             const city = document.getElementById('city-input').value.trim();
             if (city) searchCity(city);
         });
     </script>
-
 </body>
+
 </html>

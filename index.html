@@ -316,7 +316,7 @@
                         card1.innerHTML = `
                             <p class="dia-data">${nome}, ${dataFmt}</p>
                             <div class="info-group">
-                                <p class="chuva">${Math.round(val.chuva)} mm</p>
+                                <p class="chuva">${val.chuva.toFixed(1)} mm</p>
                                 <p class="temp">${Math.round(val.tMin)} - ${Math.round(val.tMax)}</p>
                             </div>
                         `;

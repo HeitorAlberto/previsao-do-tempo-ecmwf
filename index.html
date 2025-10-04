@@ -73,13 +73,13 @@
         .card {
             background-color: white;
             border-radius: 8px;
-            padding: 12px;
+            padding: 14px 16px;
             display: flex;
             flex-direction: row;
             justify-content: space-between;
             align-items: center;
             width: 100%;
-            max-width: 600px;
+            max-width: 700px; /* desktop maior */
             min-width: 250px;
             margin: 0 auto;
             box-sizing: border-box;
@@ -94,13 +94,14 @@
 
         .card p {
             margin: 0;
-            padding: 4px 8px;
+            padding: 6px 10px;
             border-radius: 5px;
-            font-size: 14px;
+            font-size: 16px; /* aumento da fonte */
         }
 
         .dia-data {
             font-weight: 800;
+            font-size: 18px; /* maior destaque para dia/data */
         }
 
         /* Cores das métricas */
@@ -127,28 +128,42 @@
         .trovoadas {
             color: #ff8000;
             font-weight: 500;
-
         }
 
-        /* Responsividade */
+        /* Responsividade celular */
         @media (max-width: 600px) {
+
+            body {padding: 0px; margin: 0px;}
+
             .card {
-                width: 95%;
+                width: 100%; /* ocupa toda a largura do body */
                 max-width: none;
-                padding: 10px;
+                padding: 12px 14px;
+                flex-direction: row;
             }
 
-            #search-box input {text-align: center;}
-
-            #search-box button {margin-top: 10px;}
-
             .card p {
-                font-size: 14px;
+                font-size: 16px;
+                padding: 6px 8px;
+            }
+
+            .dia-data {
+                font-size: 18px;
             }
 
             #search-box input {
-                width: 80%;
+                width: 90%;
+                font-size: 16px;
+                text-align: center;
             }
+
+            #search-box button {
+                margin-top: 10px;
+                font-size: 16px;
+                padding: 8px 12px;
+            }
+
+            .metricas-grid {width: 100%;}
         }
     </style>
 </head>
@@ -347,5 +362,4 @@
         });
     </script>
 </body>
-
 </html>

@@ -115,24 +115,32 @@
             background-color: #b9e3ff;
             color: #000000;
             font-weight: 500;
+            width: 90px;
+            text-align: center;
         }
 
         .temp {
             background-color: #ff9b6f;
             color: #000000;
             font-weight: 500;
+            width: 90px;
+            text-align: center;
         }
 
         .umid {
             background-color: #b9e3ff;
             color: #000000;
             font-weight: 500;
+            width: 90px;
+            text-align: center;
         }
 
         .vento {
             background-color: #90ff7f;
             color: #000000;
             font-weight: 500;
+            width: 90px;
+            text-align: center;
         }
 
 
@@ -285,7 +293,7 @@
                         card1.innerHTML = `
                         <p class="dia-data">${nome}, ${dataFmt}</p>
                         <div class="info-group">
-                            <p class="chuva">${val.chuva.toFixed(1)} mm</p>
+                            <p class="chuva">${val.chuva.toFixed(1)}</p>
                             <p class="temp">${Math.round(val.tMin)} - ${Math.round(val.tMax)}</p>
                         </div>
                     `;

@@ -149,9 +149,15 @@
                 margin: 0px;
             }
 
-            #search-box input {border-radius: 10px; padding: 14px;}
+            #search-box input {
+                border-radius: 10px;
+                padding: 14px;
+            }
 
-            #search-box button {width: 120px; border-radius: 10px;}
+            #search-box button {
+                width: 120px;
+                border-radius: 10px;
+            }
 
             .card {
                 width: 100%;
@@ -211,10 +217,6 @@
             <div id="umidade" class="cards"></div>
         </div>
 
-        <div class="metrica">
-            <h2>Chance de Trovoadas</h2>
-            <div id="trovoadas" class="cards"></div>
-        </div>
     </div>
 
     <script>
@@ -223,48 +225,17 @@
             if (el) el.innerHTML = '';
         }
 
-        function getThunderRisk(cape) {
-            if (cape == null) return "—";
-            if (cape < 1000) return "sem chance";
-            if (cape < 2000) return "trovoadas isoladas";
-            return "Trovoadas fortes";
-        }
-
-        function updateThunderCards(dailyData) {
-            const dayNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-            const sortedKeys = Object.keys(dailyData).sort((a, b) => new Date(a) - new Date(b));
-            const thunderDiv = document.getElementById('trovoadas');
-            thunderDiv.innerHTML = '';
-
-            sortedKeys.forEach(key => {
-                const [y, m, d] = key.split('-');
-                const dateObj = new Date(y, m - 1, d);
-                const dayName = dayNames[dateObj.getDay()];
-                const dateFmt = `${String(dateObj.getDate()).padStart(2, '0')}/${String(dateObj.getMonth() + 1).padStart(2, '0')}`;
-                const cape = dailyData[key].capeMax || 0;
-                const risk = getThunderRisk(cape);
-
-                const card = document.createElement('div');
-                card.classList.add('card');
-                card.innerHTML = `
-                    <p class="dia-data">${dayName}, ${dateFmt}</p>
-                    <div class="info-group">
-                        <p class="trovoadas">${risk}</p>
-                    </div>
-                `;
-                thunderDiv.appendChild(card);
-            });
-        }
+        
 
         function fetchWeather(lat, lon) {
-            const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m,wind_gusts_10m,cape&models=ecmwf_ifs&timezone=auto&forecast_days=15`;
+            const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m,wind_gusts_10m,cape,k_index,convective_inhibition&models=ecmwf_ifs&timezone=auto&forecast_days=15`;
 
             fetch(apiUrl)
                 .then(res => res.json())
                 .then(data => {
                     if (!data?.hourly?.time) return;
 
-                    const { time, temperature_2m, precipitation, wind_speed_10m, wind_gusts_10m, relative_humidity_2m, cape } = data.hourly;
+                    const { time, temperature_2m, precipitation, wind_speed_10m, wind_gusts_10m, relative_humidity_2m, cape, k_index, convective_inhibition } = data.hourly;
                     const dailyData = {};
 
                     for (let i = 0; i < time.length; i++) {
@@ -279,7 +250,9 @@
                                 umidMax: relative_humidity_2m[i],
                                 vento: wind_speed_10m[i],
                                 rajada: wind_gusts_10m[i],
-                                capeMax: cape[i] || 0
+                                capeMax: cape[i] || 0,
+                                kIndexMax: k_index[i] || 0,
+                                cinMin: convective_inhibition[i] || 0
                             };
                         } else {
                             const d = dailyData[key];
@@ -291,6 +264,8 @@
                             d.vento = Math.max(d.vento, wind_speed_10m[i]);
                             d.rajada = Math.max(d.rajada, wind_gusts_10m[i]);
                             d.capeMax = Math.max(d.capeMax, cape[i] || 0);
+                            d.kIndexMax = Math.max(d.kIndexMax, k_index[i] || 0);
+                            d.cinMin = Math.min(d.cinMin, convective_inhibition[i] || 0);
                         }
                     }
 
@@ -313,23 +288,23 @@
                         const card1 = document.createElement('div');
                         card1.classList.add('card');
                         card1.innerHTML = `
-                            <p class="dia-data">${nome}, ${dataFmt}</p>
-                            <div class="info-group">
-                                <p class="chuva">${val.chuva.toFixed(1)} mm</p>
-                                <p class="temp">${Math.round(val.tMin)} - ${Math.round(val.tMax)}</p>
-                            </div>
-                        `;
+                        <p class="dia-data">${nome}, ${dataFmt}</p>
+                        <div class="info-group">
+                            <p class="chuva">${val.chuva.toFixed(1)} mm</p>
+                            <p class="temp">${Math.round(val.tMin)} - ${Math.round(val.tMax)}</p>
+                        </div>
+                    `;
                         chuvaDiv.appendChild(card1);
 
                         const card2 = document.createElement('div');
                         card2.classList.add('card');
                         card2.innerHTML = `
-                            <p class="dia-data">${nome}, ${dataFmt}</p>
-                            <div class="info-group">
-                                <p class="umid">${Math.round(val.umidMin)} - ${Math.round(val.umidMax)}</p>
-                                <p class="vento">${Math.round(val.vento)} / ${Math.round(val.rajada)}</p>
-                            </div>
-                        `;
+                        <p class="dia-data">${nome}, ${dataFmt}</p>
+                        <div class="info-group">
+                            <p class="umid">${Math.round(val.umidMin)} - ${Math.round(val.umidMax)}</p>
+                            <p class="vento">${Math.round(val.vento)} / ${Math.round(val.rajada)}</p>
+                        </div>
+                    `;
                         umidDiv.appendChild(card2);
                     });
 
@@ -382,6 +357,7 @@
             if (city) searchCity(city);
         });
     </script>
+
 </body>
 
 </html>

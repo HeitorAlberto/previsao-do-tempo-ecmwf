@@ -91,16 +91,16 @@
         .card img {
             width: 42px;
             height: 42px;
-            margin-right: 12px;
             flex-shrink: 0;
             object-fit: contain;
         }
 
         .info-group {
             display: flex;
-            gap: 10px;
+            gap: 15px;
             flex-wrap: nowrap;
             justify-content: flex-end;
+            align-items: center;
         }
 
         .card p {
@@ -231,60 +231,15 @@
             if (el) el.innerHTML = '';
         }
 
-        function getDailyWeatherIcon(daily) {
-            const chuva = daily.chuva;             // mm acumulada no dia
-            const nuvens = daily.cloudCoverAverage; // 0-100%
-            const cape = daily.capeMax;            // instabilidade
-            const kIndex = daily.kIndexMax;        // índice convectivo (opcional)
-
-            // Sem chuva
-            if (chuva === 0) {
-                if (nuvens < 20) return 'icons/0.png';  // Sol
-                if (nuvens < 50) return 'icons/1.png';  // Parcialmente nublado
-                if (nuvens < 80) return 'icons/2.png';  // Nuvens dispersas
-                return 'icons/3.png';                   // Nublado
-            }
-
-            // Chuvisco / chuva leve (0 < chuva < 5mm)
-            if (chuva > 0 && chuva < 5) {
-                if (cape >= 1000) return 'icons/95.png';      // Trovoada leve
-                if (nuvens < 30) return 'icons/51.png';      // Sol + chuvisco
-                if (nuvens < 60) return 'icons/52.png';      // Parcial + chuvisco
-                if (nuvens < 80) return 'icons/53.png';      // Nuvens + chuvisco
-                return 'icons/61.png';                        // Nublado + chuvisco
-            }
-
-            // Chuva moderada (5 <= chuva < 15mm)
-            if (chuva >= 5 && chuva < 15) {
-                if (cape >= 1000) return 'icons/95.png';      // Trovoada moderada
-                if (nuvens < 30) return 'icons/51.png';      // Sol + chuva
-                if (nuvens < 60) return 'icons/52.png';      // Parcial + chuva
-                if (nuvens < 80) return 'icons/53.png';      // Nuvens + chuva
-                return 'icons/61.png';                        // Nublado + chuva
-            }
-
-            // Chuva forte (>= 15mm)
-            if (chuva >= 15) {
-                if (cape >= 1000) return 'icons/95.png';      // Trovoada forte
-                if (nuvens < 30) return 'icons/53.png';      // Sol + forte
-                if (nuvens < 60) return 'icons/53.png';      // Parcial + forte
-                if (nuvens < 80) return 'icons/61.png';      // Nuvens + forte
-                return 'icons/61.png';                        // Nublado + forte
-            }
-
-            // fallback
-            return 'icons/na.png';
-        }
-
         function fetchWeather(lat, lon) {
-            const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m,wind_gusts_10m,cloudcover,cape,k_index&models=ecmwf_ifs&timezone=auto&forecast_days=14`;
+            const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m,wind_gusts_10m&models=ecmwf_ifs&timezone=auto&forecast_days=14`;
 
             fetch(apiUrl)
                 .then(res => res.json())
                 .then(data => {
                     if (!data?.hourly?.time) return;
 
-                    const { time, temperature_2m, precipitation, wind_speed_10m, wind_gusts_10m, relative_humidity_2m, cloudcover, cape, k_index } = data.hourly;
+                    const { time, temperature_2m, precipitation, wind_speed_10m, wind_gusts_10m, relative_humidity_2m } = data.hourly;
 
                     const dailyData = {};
 
@@ -300,11 +255,7 @@
                                 umidMin: relative_humidity_2m[i],
                                 umidMax: relative_humidity_2m[i],
                                 vento: wind_speed_10m[i],
-                                rajada: wind_gusts_10m[i],
-                                cloudCoverSum: cloudcover[i] || 0,
-                                cloudCoverCount: 1,
-                                capeMax: cape[i] || 0,
-                                kIndexMax: k_index[i] || 0
+                                rajada: wind_gusts_10m[i]
                             };
                         } else {
                             const d = dailyData[key];
@@ -315,10 +266,6 @@
                             d.umidMax = Math.max(d.umidMax, relative_humidity_2m[i]);
                             d.vento = Math.max(d.vento, wind_speed_10m[i]);
                             d.rajada = Math.max(d.rajada, wind_gusts_10m[i]);
-                            d.cloudCoverSum += cloudcover[i] || 0;
-                            d.cloudCoverCount += 1;
-                            d.capeMax = Math.max(d.capeMax, cape[i] || 0);
-                            d.kIndexMax = Math.max(d.kIndexMax, k_index[i] || 0);
                         }
                     }
 
@@ -332,38 +279,33 @@
                     const umidDiv = document.getElementById('umidade');
 
                     sortedKeys.forEach(key => {
+                        const { tMin, tMax, chuva, umidMin, umidMax, vento, rajada } = dailyData[key];
+
                         const [y, m, d] = key.split('-');
                         const dateObj = new Date(y, m - 1, d);
                         const nome = dayNames[dateObj.getDay()];
                         const dataFmt = `${String(dateObj.getDate()).padStart(2, '0')}/${String(dateObj.getMonth() + 1).padStart(2, '0')}`;
 
-                        const val = dailyData[key];
-                        val.cloudCoverAverage = val.cloudCoverSum / val.cloudCoverCount;
-
-                        const iconSrc = getDailyWeatherIcon(val);
-
                         const card1 = document.createElement('div');
                         card1.classList.add('card');
                         card1.innerHTML = `
-                            <p class="dia-data">${nome}, ${dataFmt}</p>
-                            <div class="info-group">
-                                <img src="${iconSrc}" alt="Ícone do tempo">
-                                <p class="chuva">${val.chuva.toFixed(1)}</p>
-                                <p class="temp">${Math.round(val.tMin)} - ${Math.round(val.tMax)}</p>
-                            </div>
-                        `;
+                        <p class="dia-data">${nome}, ${dataFmt}</p>
+                        <div class="info-group">
+                            <p class="chuva">${chuva.toFixed(1)}</p>
+                            <p class="temp">${tMin.toFixed(0)} - ${tMax.toFixed(0)}</p>
+                        </div>
+                    `;
                         chuvaDiv.appendChild(card1);
 
                         const card2 = document.createElement('div');
                         card2.classList.add('card');
                         card2.innerHTML = `
-                            <p class="dia-data">${nome}, ${dataFmt}</p>
-                            <div class="info-group">
-                                <img src="${iconSrc}" alt="Ícone do tempo">
-                                <p class="umid">${Math.round(val.umidMin)} - ${Math.round(val.umidMax)}</p>
-                                <p class="vento">${Math.round(val.vento)} / ${Math.round(val.rajada)}</p>
-                            </div>
-                        `;
+                        <p class="dia-data">${nome}, ${dataFmt}</p>
+                        <div class="info-group">
+                            <p class="umid">${Math.round(umidMin)} - ${Math.round(umidMax)}</p>
+                            <p class="vento">${Math.round(vento)} / ${Math.round(rajada)}</p>
+                        </div>
+                    `;
                         umidDiv.appendChild(card2);
                     });
                 });
@@ -402,7 +344,7 @@
                 fetchLocationName(lat, lon);
                 fetchWeather(lat, lon);
             }, () => {
-                const lat = -9.7811, lon = -36.0936;
+                const lat = -9.7811, lon = -36.0936; // fallback
                 fetchLocationName(lat, lon);
                 fetchWeather(lat, lon);
             });
@@ -413,6 +355,7 @@
             if (city) searchCity(city);
         });
     </script>
+
 </body>
 
 </html>

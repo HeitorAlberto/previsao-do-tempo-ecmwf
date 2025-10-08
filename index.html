@@ -12,6 +12,9 @@
             font-family: "Ubuntu", sans-serif;
             padding: 20px;
             background-color: #f0f0f0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
         h1 {
@@ -21,21 +24,27 @@
         }
 
         #search-box {
+            display: flex;
+            gap: 5px;
+            justify-content: center;
             margin-bottom: 15px;
-            text-align: center;
+            width: 100%;
+            max-width: 600px;
         }
 
         #search-box input {
+            flex: 1;
             font-size: 22px;
-            width: 450px;
+            border-radius: 8px;
             padding: 8px;
+            text-align: center;
             font-family: "Ubuntu", sans-serif;
         }
 
         #search-box button {
             font-size: 22px;
-            margin-left: 5px;
-            padding: 8px 12px;
+            border-radius: 8px;
+            padding: 8px 14px;
             font-family: "Ubuntu", sans-serif;
         }
 
@@ -78,33 +87,48 @@
 
         .metricas-linha {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(2, 1fr);
             gap: 10px;
             font-size: 20px;
             text-align: center;
         }
 
-        .metricas-linha span {
-            display: inline-block;
+        /* ✅ Todas as métricas têm o mesmo comportamento do card de chuva */
+        .metricas-linha>div {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 15px;
             border-radius: 5px;
-            padding: 5px 6px;
             font-weight: 500;
+            font-size: 18px;
+            align-items: center;
         }
 
+        .metricas-linha>div span:last-child {
+            color: #535353;
+            font-weight: 200;
+        }
+
+
+        /* Mantém cores específicas */
         .chuva {
-            background-color: #b9e3ff;
+            background-color: #cceaff;
         }
 
         .temp {
-            background-color: #ff9b6f;
+            background-color: #ffbfa3;
         }
 
         .vento {
-            background-color: #90ff7f;
+            background-color: #c7ffbe;
+        }
+
+        .rajadas {
+            background-color: #c7ffbe;
         }
 
         .umid {
-            background-color: #b9e3ff;
+            background-color: #cceaff;
         }
 
         /* ✅ Agora os detalhes ficam dentro do card */
@@ -112,7 +136,7 @@
             max-height: 0;
             overflow: hidden;
             background: #fff;
-            border-radius: 0 0 8px 8px;
+            border-radius: 8px;
             margin-top: 6px;
             box-sizing: border-box;
         }
@@ -136,12 +160,23 @@
         }
 
         @media (max-width: 700px) {
+
+            #search-box {
+                display: flex;
+                flex-direction: column;
+                gap: 5px;
+                justify-content: center;
+                margin-bottom: 15px;
+            }
+
             #search-box input {
                 font-size: 22px;
-                width: 80%;
+                border-radius: 8px;
                 padding: 8px;
-                margin-bottom: 5px;
-                font-family: "Ubuntu", sans-serif;
+            }
+
+            #serch-button {
+                border-radius: 8px;
             }
 
             .metricas-linha {
@@ -171,8 +206,8 @@
     <script>
         const weatherDescriptions = {
             0: "Céu limpo", 1: "Algumas nuvens", 2: "Muitas nuvens", 3: "Nublado",
-            45: "Névoa", 48: "Neblina", 51: "Chuvisco fraco", 53: "Chuvisco moderado",
-            55: "Chuvisco forte", 56: "Chuvisco congelante fraco", 57: "Chuvisco congelante forte",
+            45: "Névoa", 48: "Neblina", 51: "Garoa fraca", 53: "Garoa moderado",
+            55: "Garoa forte", 56: "Garoa congelante fraca", 57: "Garoa congelante forte",
             61: "Chuva fraca", 63: "Chuva moderada", 65: "Chuva forte", 66: "Chuva congelante fraca",
             67: "Chuva congelante forte", 71: "Neve fraca", 73: "Neve moderada", 75: "Neve forte",
             77: "Cristais de gelo", 80: "Pancadas de chuva fraca", 81: "Pancadas de chuva moderada",
@@ -261,15 +296,16 @@
                         card.innerHTML = `
               <p class="dia-data">${nome}, ${dataFmt}</p>
               <div class="metricas-linha">
-                <span class="chuva">${chuva.toFixed(1)} mm</span>
-                <span class="temp">${tMin.toFixed(0)} - ${tMax.toFixed(0)} (°C)</span>
-                <span class="vento">${Math.round(vento)} / ${Math.round(rajada)} (km/h)</span>
-                <span class="umid">${Math.round(umidMin)} - ${Math.round(umidMax)} (%)</span>
+                <div class="chuva"><span>Chuva </span><span>${chuva.toFixed(1)} mm</span></div>
+                <div class="temp"><span>Temperatura </span><span>${tMin.toFixed(0)} a ${tMax.toFixed(0)} °C</span></div>
+                <div class="vento"><span>Vento </span><span>${Math.round(vento)} km/h</span></div>
+                <div class="rajadas"><span>Rajadas </span><span>${Math.round(rajada)} km/h</span></div>
+                <div class="umid"><span>Umidade </span><span>${Math.round(umidMin)} a ${Math.round(umidMax)} %</span></div>
               </div>
             `;
 
                         const details = createWeatherMenu(weatherHours, isToday);
-                        card.appendChild(details); // ✅ agora dentro do card
+                        card.appendChild(details);
                         card.addEventListener('click', () => details.classList.toggle('open'));
 
                         container.appendChild(card);

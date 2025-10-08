@@ -93,24 +93,19 @@
             text-align: center;
         }
 
-        /* ✅ Todas as métricas têm o mesmo comportamento do card de chuva */
         .metricas-linha>div {
             display: flex;
             justify-content: space-between;
             padding: 10px 15px;
             border-radius: 5px;
-            font-weight: 500;
             font-size: 18px;
             align-items: center;
         }
 
         .metricas-linha>div span:last-child {
-            color: #535353;
-            font-weight: 200;
+            font-weight: bold;
         }
 
-
-        /* Mantém cores específicas */
         .chuva {
             background-color: #cceaff;
         }
@@ -131,7 +126,6 @@
             background-color: #cceaff;
         }
 
-        /* ✅ Agora os detalhes ficam dentro do card */
         .weather-details {
             max-height: 0;
             overflow: hidden;
@@ -139,10 +133,12 @@
             border-radius: 8px;
             margin-top: 6px;
             box-sizing: border-box;
+            transition: max-height 360ms ease, padding 360ms ease;
+            will-change: max-height;
+            padding: 0 4px;
         }
 
         .weather-details.open {
-            max-height: 3000px;
             padding: 10px 4px;
         }
 
@@ -160,7 +156,6 @@
         }
 
         @media (max-width: 700px) {
-
             #search-box {
                 display: flex;
                 flex-direction: column;
@@ -237,6 +232,40 @@
             return div;
         }
 
+        // 🔹 funções de animação de abertura/fechamento
+        function openDetails(details, card) {
+            details.classList.add('open');
+            details.style.maxHeight = details.scrollHeight + 'px';
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    const top = card.getBoundingClientRect().top + window.scrollY - 10;
+                    window.scrollTo({ top, behavior: 'smooth' });
+                });
+            });
+            const onEnd = (ev) => {
+                if (ev.propertyName === 'max-height') {
+                    details.style.maxHeight = 'none';
+                    details.removeEventListener('transitionend', onEnd);
+                }
+            };
+            details.addEventListener('transitionend', onEnd);
+        }
+
+        function collapseDetails(details) {
+            if (!details.classList.contains('open')) return;
+            details.style.maxHeight = details.scrollHeight + 'px';
+            void details.offsetHeight;
+            details.style.maxHeight = '0px';
+            details.classList.remove('open');
+            const onEnd = (ev) => {
+                if (ev.propertyName === 'max-height') {
+                    details.style.maxHeight = '';
+                    details.removeEventListener('transitionend', onEnd);
+                }
+            };
+            details.addEventListener('transitionend', onEnd);
+        }
+
         function fetchWeather(lat, lon) {
             const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m,wind_gusts_10m,weathercode&models=ecmwf_ifs&timezone=auto&forecast_days=14`;
 
@@ -251,7 +280,6 @@
                     for (let i = 0; i < time.length; i++) {
                         const date = new Date(time[i]);
                         const key = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
-
                         if (!dailyData[key]) {
                             dailyData[key] = {
                                 tMin: temperature_2m[i],
@@ -264,7 +292,6 @@
                                 weatherHours: []
                             };
                         }
-
                         const d = dailyData[key];
                         d.tMin = Math.min(d.tMin, temperature_2m[i]);
                         d.tMax = Math.max(d.tMax, temperature_2m[i]);
@@ -283,7 +310,7 @@
                     const hojeStr = `${new Date().getFullYear()}-${new Date().getMonth() + 1}-${new Date().getDate()}`;
                     const container = document.getElementById('cards-container');
 
-                    sortedKeys.forEach(key => {
+                    sortedKeys.forEach((key, idx) => {
                         const { tMin, tMax, chuva, umidMin, umidMax, vento, rajada, weatherHours } = dailyData[key];
                         const [y, m, d] = key.split('-');
                         const dateObj = new Date(y, m - 1, d);
@@ -293,6 +320,7 @@
 
                         const card = document.createElement('div');
                         card.classList.add('card');
+                        card.setAttribute('data-index', idx);
                         card.innerHTML = `
               <p class="dia-data">${nome}, ${dataFmt}</p>
               <div class="metricas-linha">
@@ -306,10 +334,34 @@
 
                         const details = createWeatherMenu(weatherHours, isToday);
                         card.appendChild(details);
-                        card.addEventListener('click', () => details.classList.toggle('open'));
+
+                        card.addEventListener('click', () => {
+                            const isOpen = details.classList.contains('open');
+                            document.querySelectorAll('.weather-details.open').forEach(o => collapseDetails(o));
+
+                            if (isOpen) {
+                                collapseDetails(details);
+                                history.back(); // voltar no histórico se fechar
+                            } else {
+                                openDetails(details, card);
+                                history.pushState({ openIndex: idx }, '', `#dia${idx}`);
+                            }
+                        });
 
                         container.appendChild(card);
                     });
+
+                    // 🔹 Ao clicar em "Voltar" no navegador
+                    window.onpopstate = (event) => {
+                        document.querySelectorAll('.weather-details.open').forEach(o => collapseDetails(o));
+                        if (event.state?.openIndex != null) {
+                            const card = document.querySelector(`.card[data-index="${event.state.openIndex}"]`);
+                            if (card) {
+                                const details = card.querySelector('.weather-details');
+                                openDetails(details, card);
+                            }
+                        }
+                    };
                 });
         }
 

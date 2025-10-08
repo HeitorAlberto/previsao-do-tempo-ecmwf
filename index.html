@@ -296,11 +296,11 @@
                         card.innerHTML = `
               <p class="dia-data">${nome}, ${dataFmt}</p>
               <div class="metricas-linha">
-                <div class="chuva"><span>Chuva </span><span>${chuva.toFixed(1)} mm</span></div>
-                <div class="temp"><span>Temperatura </span><span>${tMin.toFixed(0)} a ${tMax.toFixed(0)} °C</span></div>
-                <div class="vento"><span>Vento </span><span>${Math.round(vento)} km/h</span></div>
-                <div class="rajadas"><span>Rajadas </span><span>${Math.round(rajada)} km/h</span></div>
-                <div class="umid"><span>Umidade </span><span>${Math.round(umidMin)} a ${Math.round(umidMax)} %</span></div>
+                <div class="chuva"><span>Chuva (mm) </span><span>${chuva.toFixed(1)} </span></div>
+                <div class="temp"><span>Temperatura (°C) </span><span>${tMin.toFixed(0)} a ${tMax.toFixed(0)} </span></div>
+                <div class="vento"><span>Vento (km/h)</span><span>${Math.round(vento)} </span></div>
+                <div class="rajadas"><span>Rajadas (km/h) </span><span>${Math.round(rajada)} </span></div>
+                <div class="umid"><span>Umidade (%) </span><span>${Math.round(umidMin)} a ${Math.round(umidMax)} </span></div>
               </div>
             `;
 

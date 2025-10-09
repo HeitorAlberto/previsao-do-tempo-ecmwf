@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Previsão do Tempo - ECMWF</title>
+    <title>Previsão do Tempo</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap');
 
@@ -42,6 +42,8 @@
         }
 
         #search-box button {
+            background-color: #282828;
+            color: white;
             font-size: 22px;
             border-radius: 8px;
             padding: 8px 14px;
@@ -126,6 +128,18 @@
             background-color: #cceaff;
         }
 
+        .sol {
+            background-color: #fff6a1;
+        }
+
+        .risco-trovoadas {
+            font-size:18px;
+            margin-top:5px;
+            text-align: center;
+            margin-bottom: 0px;
+            font-weight: bolder;
+        }
+
         .weather-details {
             max-height: 0;
             overflow: hidden;
@@ -145,7 +159,7 @@
         .weather-details p {
             display: flex;
             gap: 20px;
-            padding: 8px 10px;
+            padding: 2px 10px;
             font-size: 20px;
         }
 
@@ -187,7 +201,7 @@
 </head>
 
 <body>
-    <h1>Previsão 15 dias - ECMWF (Alta resolução - 9km)</h1>
+    <h1>Previsão 16 dias - Open Meteo</h1>
 
     <div id="search-box">
         <input type="text" id="city-input" placeholder="Digite a cidade">
@@ -201,8 +215,8 @@
     <script>
         const weatherDescriptions = {
             0: "Céu limpo", 1: "Algumas nuvens", 2: "Muitas nuvens", 3: "Nublado",
-            45: "Névoa", 48: "Neblina", 51: "Garoa fraca", 53: "Garoa moderado",
-            55: "Garoa forte", 56: "Garoa congelante fraca", 57: "Garoa congelante forte",
+            45: "Névoa", 48: "Neblina", 51: "Chuvisco fraco", 53: "Chuvisco moderado",
+            55: "Chuvisco forte", 56: "Garoa congelante fraca", 57: "Garoa congelante forte",
             61: "Chuva fraca", 63: "Chuva moderada", 65: "Chuva forte", 66: "Chuva congelante fraca",
             67: "Chuva congelante forte", 71: "Neve fraca", 73: "Neve moderada", 75: "Neve forte",
             77: "Cristais de gelo", 80: "Pancadas de chuva fraca", 81: "Pancadas de chuva moderada",
@@ -214,25 +228,24 @@
             document.getElementById('cards-container').innerHTML = '';
         }
 
-        function createWeatherMenu(list, isToday) {
+        function createWeatherMenu(hourlyTimes, hourlyCodes, isToday) {
             const div = document.createElement('div');
             div.classList.add('weather-details');
 
             const currentHour = new Date().getHours();
-            list.sort((a, b) => a.hora - b.hora);
-
-            for (let h = 0; h < 24; h++) {
-                const found = list.find(item => item.hora === h);
-                const desc = found ? (weatherDescriptions[found.code] || `Código ${found.code}`) : "Sem dados";
+            for (let i = 0; i < hourlyTimes.length; i++) {
+                const date = new Date(hourlyTimes[i]); // aqui pode manter, pois hourly tem hora
+                const hora = date.getHours();
+                const desc = weatherDescriptions[hourlyCodes[i]] || `Código ${hourlyCodes[i]}`;
                 const p = document.createElement('p');
-                p.innerHTML = `<span><b>${String(h).padStart(2, '0')}:00</b></span><span style="color: gray;">${desc}</span>`;
-                if (isToday && h === currentHour) p.classList.add('current-hour');
+                p.innerHTML = `<span><b>${String(hora).padStart(2, '0')}:00</b></span><span style="color: gray;">${desc}</span>`;
+                if (isToday && hora === currentHour) p.classList.add('current-hour');
                 div.appendChild(p);
             }
             return div;
         }
 
-        // 🔹 funções de animação de abertura/fechamento
+        // animações
         function openDetails(details, card) {
             details.classList.add('open');
             details.style.maxHeight = details.scrollHeight + 'px';
@@ -267,72 +280,70 @@
         }
 
         function fetchWeather(lat, lon) {
-            const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m,wind_gusts_10m,weathercode&models=ecmwf_ifs&timezone=auto&forecast_days=14`;
+            const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weather_code,temperature_2m_max,temperature_2m_min,apparent_temperature_max,apparent_temperature_min,uv_index_clear_sky_max,uv_index_max,sunshine_duration,daylight_duration,sunset,sunrise,rain_sum,showers_sum,snowfall_sum,precipitation_sum,precipitation_hours,precipitation_probability_max,et0_fao_evapotranspiration,shortwave_radiation_sum,wind_direction_10m_dominant,wind_gusts_10m_max,wind_speed_10m_max,relative_humidity_2m_max,relative_humidity_2m_min&hourly=weather_code&timezone=auto&forecast_days=16`;
 
             fetch(apiUrl)
                 .then(res => res.json())
                 .then(data => {
-                    if (!data?.hourly?.time) return;
+                    if (!data?.daily?.time) return;
 
-                    const { time, temperature_2m, precipitation, wind_speed_10m, wind_gusts_10m, relative_humidity_2m, weathercode } = data.hourly;
-                    const dailyData = {};
-
-                    for (let i = 0; i < time.length; i++) {
-                        const date = new Date(time[i]);
-                        const key = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
-                        if (!dailyData[key]) {
-                            dailyData[key] = {
-                                tMin: temperature_2m[i],
-                                tMax: temperature_2m[i],
-                                chuva: 0,
-                                umidMin: relative_humidity_2m[i],
-                                umidMax: relative_humidity_2m[i],
-                                vento: wind_speed_10m[i],
-                                rajada: wind_gusts_10m[i],
-                                weatherHours: []
-                            };
-                        }
-                        const d = dailyData[key];
-                        d.tMin = Math.min(d.tMin, temperature_2m[i]);
-                        d.tMax = Math.max(d.tMax, temperature_2m[i]);
-                        d.chuva += precipitation[i] || 0;
-                        d.umidMin = Math.min(d.umidMin, relative_humidity_2m[i]);
-                        d.umidMax = Math.max(d.umidMax, relative_humidity_2m[i]);
-                        d.vento = Math.max(d.vento, wind_speed_10m[i]);
-                        d.rajada = Math.max(d.rajada, wind_gusts_10m[i]);
-                        d.weatherHours.push({ hora: date.getHours(), code: weathercode[i] });
-                    }
-
+                    const d = data.daily;
+                    const h = data.hourly;
                     clearContainer();
 
-                    const dayNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-                    const sortedKeys = Object.keys(dailyData).sort((a, b) => new Date(a) - new Date(b));
-                    const hojeStr = `${new Date().getFullYear()}-${new Date().getMonth() + 1}-${new Date().getDate()}`;
                     const container = document.getElementById('cards-container');
+                    const dayNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+                    const hojeStr = new Date().toISOString().split('T')[0];
 
-                    sortedKeys.forEach((key, idx) => {
-                        const { tMin, tMax, chuva, umidMin, umidMax, vento, rajada, weatherHours } = dailyData[key];
-                        const [y, m, d] = key.split('-');
-                        const dateObj = new Date(y, m - 1, d);
+                    d.time.forEach((dateStr, idx) => {
+                        // ✅ corrigido: cria Date local sem aplicar UTC
+                        const [year, month, day] = dateStr.split("-").map(Number);
+                        const dateObj = new Date(year, month - 1, day);
+
                         const nome = dayNames[dateObj.getDay()];
                         const dataFmt = `${String(dateObj.getDate()).padStart(2, '0')}/${String(dateObj.getMonth() + 1).padStart(2, '0')}`;
-                        const isToday = key === hojeStr;
+                        const isToday = dateStr === hojeStr;
+
+                        const tMin = d.temperature_2m_min[idx];
+                        const tMax = d.temperature_2m_max[idx];
+                        const chuva = d.precipitation_sum[idx];
+                        const vento = d.wind_speed_10m_max[idx];
+                        const rajada = d.wind_gusts_10m_max[idx];
+                        const umidMax = d.relative_humidity_2m_max[idx];
+                        const umidMin = d.relative_humidity_2m_min[idx];
+                        const nascer = new Date(d.sunrise[idx]).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                        const por = new Date(d.sunset[idx]).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+                        // filtrar horas desse dia
+                        const dailyHours = [];
+                        const dailyCodes = [];
+                        h.time.forEach((t, i) => {
+                            if (t.startsWith(dateStr)) {
+                                dailyHours.push(t);
+                                dailyCodes.push(h.weather_code[i]);
+                            }
+                        });
+
+                        // ⚡ novo: detectar trovoadas
+                        const riscoTrovoadas = dailyCodes.some(c => [95, 96, 99].includes(c));
 
                         const card = document.createElement('div');
                         card.classList.add('card');
                         card.setAttribute('data-index', idx);
                         card.innerHTML = `
-              <p class="dia-data">${nome}, ${dataFmt}</p>
-              <div class="metricas-linha">
-                <div class="chuva"><span>Chuva (mm) </span><span>${chuva.toFixed(1)} </span></div>
-                <div class="temp"><span>Temperatura (°C) </span><span>${tMin.toFixed(0)} a ${tMax.toFixed(0)} </span></div>
-                <div class="vento"><span>Vento (km/h)</span><span>${Math.round(vento)} </span></div>
-                <div class="rajadas"><span>Rajadas (km/h) </span><span>${Math.round(rajada)} </span></div>
-                <div class="umid"><span>Umidade (%) </span><span>${Math.round(umidMin)} a ${Math.round(umidMax)} </span></div>
-              </div>
-            `;
+                        <p class="dia-data">${nome}, ${dataFmt}</p>
+                        <div class="metricas-linha">
+                            <div class="chuva"><span>Chuva (mm)</span><span>${chuva.toFixed(1)}</span></div>
+                            <div class="temp"><span>Temperatura (°C)</span><span>${tMin.toFixed(0)} a ${tMax.toFixed(0)}</span></div>
+                            <div class="vento"><span>Vento (km/h)</span><span>${Math.round(vento)}</span></div>
+                            <div class="rajadas"><span>Rajadas (km/h)</span><span>${Math.round(rajada)}</span></div>
+                            <div class="umid"><span>Umidade (%) </span><span>${umidMin} a ${umidMax}</span></div>
+                            <div class="sol"><span>Sol</span><span>${nascer} / ${por}</span></div>
+                        </div>
+                        ${riscoTrovoadas ? `<p class="risco-trovoadas">Risco de trovoadas ⚠️</p>` : ""}
+                    `;
 
-                        const details = createWeatherMenu(weatherHours, isToday);
+                        const details = createWeatherMenu(dailyHours, dailyCodes, isToday);
                         card.appendChild(details);
 
                         card.addEventListener('click', () => {
@@ -341,7 +352,7 @@
 
                             if (isOpen) {
                                 collapseDetails(details);
-                                history.back(); // voltar no histórico se fechar
+                                history.back();
                             } else {
                                 openDetails(details, card);
                                 history.pushState({ openIndex: idx }, '', `#dia${idx}`);
@@ -351,7 +362,6 @@
                         container.appendChild(card);
                     });
 
-                    // 🔹 Ao clicar em "Voltar" no navegador
                     window.onpopstate = (event) => {
                         document.querySelectorAll('.weather-details.open').forEach(o => collapseDetails(o));
                         if (event.state?.openIndex != null) {
@@ -388,6 +398,7 @@
                         const lat = d[0].lat, lon = d[0].lon;
                         fetchLocationName(lat, lon);
                         fetchWeather(lat, lon);
+                        document.getElementById('city-input').value = ""; // 🧹 limpa o campo após a busca
                     } else alert("Cidade não encontrada.");
                 });
         }
@@ -409,6 +420,7 @@
             if (city) searchCity(city);
         });
     </script>
+
 </body>
 
 </html>

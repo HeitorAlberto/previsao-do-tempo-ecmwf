@@ -89,7 +89,7 @@
 
         .metricas-linha {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: 1fr 1fr;
             gap: 10px;
             font-size: 20px;
             text-align: center;
@@ -160,14 +160,13 @@
         .weather-details p {
             display: flex;
             gap: 20px;
-            padding: 2px 10px;
+            padding: 10px;
             font-size: 20px;
         }
 
         .current-hour {
             background-color: #befaff;
             border-radius: 4px;
-            padding-left: 5px;
         }
 
         @media (max-width: 700px) {
@@ -187,6 +186,10 @@
 
             #serch-button {
                 border-radius: 8px;
+            }
+
+            .cards {
+                width: 100%;
             }
 
             .metricas-linha {

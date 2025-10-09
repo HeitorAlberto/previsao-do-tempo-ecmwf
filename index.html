@@ -109,32 +109,32 @@
         }
 
         .chuva {
-            background-color: #cceaff;
+            background-color: #dfdfdf;
         }
 
         .temp {
-            background-color: #ffbfa3;
+            background-color: #dfdfdf;
         }
 
         .vento {
-            background-color: #c7ffbe;
+            background-color: #dfdfdf;
         }
 
         .rajadas {
-            background-color: #c7ffbe;
+            background-color: #dfdfdf;
         }
 
         .umid {
-            background-color: #cceaff;
+            background-color: #dfdfdf;
         }
 
         .sol {
-            background-color: #fff6a1;
+            background-color: #dfdfdf;
         }
 
         .alerta {
-            font-size:18px;
-            margin-top:5px;
+            font-size: 18px;
+            margin-top: 5px;
             text-align: center;
             margin-bottom: 0px;
             font-weight: bolder;
@@ -337,12 +337,12 @@
                         card.innerHTML = `
                         <p class="dia-data">${nome}, ${dataFmt}</p>
                         <div class="metricas-linha">
-                            <div class="chuva"><span>Chuva (mm)</span><span>${chuva.toFixed(1)}</span></div>
-                            <div class="temp"><span>Temperatura (°C)</span><span>${tMin.toFixed(0)} a ${tMax.toFixed(0)}</span></div>
-                            <div class="vento"><span>Vento (km/h)</span><span>${Math.round(vento)}</span></div>
-                            <div class="rajadas"><span>Rajadas (km/h)</span><span>${Math.round(rajada)}</span></div>
-                            <div class="umid"><span>Umidade (%) </span><span>${umidMin} a ${umidMax}</span></div>
-                            <div class="sol"><span>Sol</span><span>${nascer} / ${por}</span></div>
+                            <div class="chuva"><span>☔ Chuva (mm)</span><span>${chuva.toFixed(1)}</span></div>
+                            <div class="temp"><span>🌡️ Temperatura (°C)</span><span>${tMin.toFixed(0)} a ${tMax.toFixed(0)}</span></div>
+                            <div class="vento"><span>🍃 Vento (km/h)</span><span>${Math.round(vento)}</span></div>
+                            <div class="rajadas"><span>🍃 Rajadas (km/h)</span><span>${Math.round(rajada)}</span></div>
+                            <div class="umid"><span>💧 Umidade (%) </span><span>${umidMin} a ${umidMax}</span></div>
+                            <div class="sol"><span>☀️ Sol</span><span>${nascer} / ${por}</span></div>
                         </div>
                         ${riscoTrovoadas ? `<p class="alerta">Alerta de trovoadas!</p>` : ""}
                         ${chuva > 15 ? `<p class="alerta">Alerta de acumulado de chuva!</p>` : ""}

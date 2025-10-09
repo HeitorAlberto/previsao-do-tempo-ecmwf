@@ -132,12 +132,13 @@
             background-color: #fff6a1;
         }
 
-        .risco-trovoadas {
+        .alerta {
             font-size:18px;
             margin-top:5px;
             text-align: center;
             margin-bottom: 0px;
             font-weight: bolder;
+            color: #eb4848;
         }
 
         .weather-details {
@@ -340,7 +341,9 @@
                             <div class="umid"><span>Umidade (%) </span><span>${umidMin} a ${umidMax}</span></div>
                             <div class="sol"><span>Sol</span><span>${nascer} / ${por}</span></div>
                         </div>
-                        ${riscoTrovoadas ? `<p class="risco-trovoadas">Risco de trovoadas ⚠️</p>` : ""}
+                        ${riscoTrovoadas ? `<p class="alerta">Alerta de trovoadas!</p>` : ""}
+                        ${chuva > 15 ? `<p class="alerta">Alerta de acumulado de chuva!</p>` : ""}
+                        ${umidMin < 30 ? `<p class="alerta">Alerta de baixa umidade do ar!</p>` : ""}
                     `;
 
                         const details = createWeatherMenu(dailyHours, dailyCodes, isToday);

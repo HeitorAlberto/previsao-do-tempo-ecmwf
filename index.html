@@ -225,7 +225,7 @@
                 gap: 8px;
             }
 
-            /* === NOVO comportamento: "carrossel de página" === */
+            /* === Carrossel por página === */
             #hourly-grid {
                 display: flex;
                 overflow-x: auto;
@@ -233,7 +233,13 @@
                 scroll-behavior: smooth;
                 -webkit-overflow-scrolling: touch;
                 width: 100%;
-                height: 100%;
+                scrollbar-width: none;
+                /* Firefox */
+            }
+
+            /* Esconde a barra de rolagem no celular */
+            #hourly-grid::-webkit-scrollbar {
+                display: none;
             }
 
             .hour-column {
@@ -256,6 +262,27 @@
 
             .current-hour {
                 background-color: #fff4be;
+            }
+
+            /* Indicadores (agora acima do botão Fechar) */
+            #slide-indicators {
+                display: flex;
+                justify-content: center;
+                gap: 6px;
+                margin-top: 15px;
+                margin-bottom: 20px;
+            }
+
+            .indicator-dot {
+                width: 10px;
+                height: 10px;
+                background-color: #ccc;
+                border-radius: 50%;
+                transition: background-color 0.3s;
+            }
+
+            .indicator-dot.active {
+                background-color: #282828;
             }
         }
     </style>
@@ -312,7 +339,6 @@
 
                     const container = document.getElementById('cards-container');
                     const dayNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-                    const hojeStr = new Date().toISOString().split('T')[0];
 
                     d.time.forEach((dateStr, idx) => {
                         const [year, month, day] = dateStr.split("-").map(Number);
@@ -345,25 +371,24 @@
                         const card = document.createElement('div');
                         card.classList.add('card');
                         card.innerHTML = `
-                            <div class="card-header">
-                                <p class="dia-data">${nome}, ${dataFmt}</p>
-                                <button class="btn-detalhes">Detalhes hora a hora</button>
-                            </div>
-                            <div class="metricas-linha">
-                                <div class="chuva"><span>☔ Chuva (mm)</span><span>${chuva.toFixed(1)}</span></div>
-                                <div class="temp"><span>🌡️ Temperatura (°C)</span><span>${tMin.toFixed(0)} a ${tMax.toFixed(0)}</span></div>
-                                <div class="vento"><span>🍃 Vento (km/h)</span><span>${Math.round(vento)}</span></div>
-                                <div class="rajadas"><span>🍃 Rajadas (km/h)</span><span>${Math.round(rajada)}</span></div>
-                                <div class="umid"><span>💧 Umidade (%) </span><span>${umidMin} a ${umidMax}</span></div>
-                                <div class="sol"><span>☀️ Sol</span><span>${nascer} / ${por}</span></div>
-                            </div>
-                            ${riscoTrovoadas ? `<p class="alerta">Alerta de trovoadas!</p>` : ""}
-                            ${chuva > 15 ? `<p class="alerta">Alerta de acumulado de chuva!</p>` : ""}
-                            ${umidMin < 30 ? `<p class="alerta">Alerta de baixa umidade do ar!</p>` : ""}
-                            ${rajada >= 40 ? `<p class="alerta">Alerta de rajadas de vento!</p>` : ""}
-                        `;
+                        <div class="card-header">
+                            <p class="dia-data">${nome}, ${dataFmt}</p>
+                            <button class="btn-detalhes">Detalhes hora a hora</button>
+                        </div>
+                        <div class="metricas-linha">
+                            <div class="chuva"><span>☔ Chuva (mm)</span><span>${chuva.toFixed(1)}</span></div>
+                            <div class="temp"><span>🌡️ Temperatura (°C)</span><span>${tMin.toFixed(0)} a ${tMax.toFixed(0)}</span></div>
+                            <div class="vento"><span>🍃 Vento (km/h)</span><span>${Math.round(vento)}</span></div>
+                            <div class="rajadas"><span>🍃 Rajadas (km/h)</span><span>${Math.round(rajada)}</span></div>
+                            <div class="umid"><span>💧 Umidade (%)</span><span>${umidMin} a ${umidMax}</span></div>
+                            <div class="sol"><span>☀️ Sol</span><span>${nascer} / ${por}</span></div>
+                        </div>
+                        ${riscoTrovoadas ? `<p class="alerta">Alerta de trovoadas!</p>` : ""}
+                        ${chuva > 15 ? `<p class="alerta">Alerta de acumulado de chuva!</p>` : ""}
+                        ${umidMin < 30 ? `<p class="alerta">Alerta de baixa umidade do ar!</p>` : ""}
+                        ${rajada >= 40 ? `<p class="alerta">Alerta de rajadas de vento!</p>` : ""}
+                    `;
 
-                        // evento do botão
                         card.querySelector('.btn-detalhes').addEventListener('click', (e) => {
                             e.stopPropagation();
                             openHourlyOverlay(nome, dataFmt, dailyHours, dailyCodes);
@@ -374,7 +399,7 @@
                 });
         }
 
-        // overlay hora a hora
+        // === Overlay hora a hora com carrossel e bolinhas ===
         function openHourlyOverlay(dia, dataFmt, hourlyTimes, hourlyCodes) {
             const overlay = document.getElementById('hourly-overlay');
             const grid = document.getElementById('hourly-grid');
@@ -384,7 +409,11 @@
             title.textContent = `${dia}, ${dataFmt}`;
             grid.innerHTML = "";
 
-            // 4 colunas, cada uma com 6 horas
+            // Remove indicadores antigos
+            const oldIndicators = document.getElementById('slide-indicators');
+            if (oldIndicators) oldIndicators.remove();
+
+            // Cria 4 colunas (6h cada)
             const groups = [[], [], [], []];
             hourlyTimes.forEach((t, i) => {
                 const d = new Date(t);
@@ -403,6 +432,28 @@
                 colDiv.className = 'hour-column';
                 colHours.forEach(h => colDiv.appendChild(h));
                 grid.appendChild(colDiv);
+            });
+
+            // === Indicadores (acima do botão fechar) ===
+            const indicators = document.createElement('div');
+            indicators.id = 'slide-indicators';
+            groups.forEach((_, idx) => {
+                const dot = document.createElement('div');
+                dot.className = 'indicator-dot';
+                if (idx === 0) dot.classList.add('active');
+                indicators.appendChild(dot);
+            });
+
+            const closeBtn = document.getElementById('close-overlay');
+            closeBtn.parentNode.insertBefore(indicators, closeBtn);
+
+            // Atualiza bolinhas conforme o scroll
+            grid.addEventListener('scroll', () => {
+                const colWidth = grid.clientWidth;
+                const index = Math.round(grid.scrollLeft / colWidth);
+                document.querySelectorAll('.indicator-dot').forEach((dot, i) => {
+                    dot.classList.toggle('active', i === index);
+                });
             });
 
             overlay.style.display = 'flex';
@@ -457,6 +508,8 @@
             if (city) searchCity(city);
         });
     </script>
+
+
 </body>
 
 </html>

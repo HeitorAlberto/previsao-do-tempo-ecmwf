@@ -61,7 +61,7 @@
         .cards {
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 30px;
             width: 100%;
             max-width: 900px;
             margin: 0 auto;
@@ -71,7 +71,6 @@
             background-color: white;
             border-radius: 8px;
             padding: 14px 16px;
-            cursor: pointer;
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
             display: flex;
             flex-direction: column;
@@ -80,18 +79,41 @@
             width: 100%;
         }
 
+        /* título + botão */
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
         .dia-data {
             font-weight: bold;
             font-size: 22px;
             text-align: left;
-            margin: 0px 0px 10px 0px;
+            margin: 0;
+        }
+
+        .btn-detalhes {
+            font-size: 14px;
+            background-color: #636363;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 5px 10px;
+            cursor: pointer;
+            font-family: "Ubuntu", sans-serif;
+        }
+
+        .btn-detalhes:hover {
+            background-color: #1f1f1f;
         }
 
         .metricas-linha {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 10px;
-            font-size: 20px;
+            font-size: 16px;
             text-align: center;
         }
 
@@ -106,30 +128,16 @@
 
         .metricas-linha>div span:last-child {
             font-weight: bold;
+            font-size: 22px;
         }
 
-        .chuva {
-            background-color: #dfdfdf;
-        }
-
-        .temp {
-            background-color: #dfdfdf;
-        }
-
-        .vento {
-            background-color: #dfdfdf;
-        }
-
-        .rajadas {
-            background-color: #dfdfdf;
-        }
-
-        .umid {
-            background-color: #dfdfdf;
-        }
-
+        .chuva,
+        .temp,
+        .vento,
+        .rajadas,
+        .umid,
         .sol {
-            background-color: #dfdfdf;
+            background-color: #ebebeb;
         }
 
         .alerta {
@@ -141,55 +149,75 @@
             color: #eb4848;
         }
 
-        .weather-details {
-            max-height: 0;
-            overflow: hidden;
-            background: #fff;
-            border-radius: 8px;
-            margin-top: 6px;
-            box-sizing: border-box;
-            transition: max-height 360ms ease, padding 360ms ease;
-            will-change: max-height;
-            padding: 0 4px;
+        /* Overlay hora a hora */
+        #hourly-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
         }
 
-        .weather-details.open {
-            padding: 10px 4px;
+        #hourly-content {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            max-width: 1000px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
         }
 
-        .weather-details p {
+        #hourly-content h2 {
+            margin-top: 0;
+            text-align: center;
+        }
+
+        /* Agora as colunas são verticais */
+        #hourly-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        .hour-column {
             display: flex;
-            gap: 20px;
-            padding: 10px;
-            font-size: 20px;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .hour-box {
+            background: #f3f3f3;
+            border-radius: 8px;
+            padding: 8px;
+            font-size: 16px;
+            text-align: center;
         }
 
         .current-hour {
-            background-color: #befaff;
-            border-radius: 4px;
+            background-color: #fff4be;
+        }
+
+        #close-overlay {
+            background-color: #282828;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 14px;
+            cursor: pointer;
+            display: block;
+            margin: 10px auto 0;
         }
 
         @media (max-width: 700px) {
             #search-box {
-                display: flex;
                 flex-direction: column;
-                gap: 5px;
-                justify-content: center;
-                margin-bottom: 15px;
-            }
-
-            #search-box input {
-                font-size: 22px;
-                border-radius: 8px;
-                padding: 8px;
-            }
-
-            #serch-button {
-                border-radius: 8px;
-            }
-
-            .cards {
-                width: 100%;
             }
 
             .metricas-linha {
@@ -197,8 +225,8 @@
                 gap: 8px;
             }
 
-            .weather-details p {
-                font-size: 18px;
+            #hourly-grid {
+                grid-template-columns: 1fr;
             }
         }
     </style>
@@ -216,9 +244,18 @@
 
     <div id="cards-container" class="cards"></div>
 
+    <!-- Overlay para detalhes hora a hora -->
+    <div id="hourly-overlay">
+        <div id="hourly-content">
+            <h2>Detalhes hora a hora</h2>
+            <div id="hourly-grid"></div>
+            <button id="close-overlay">Fechar</button>
+        </div>
+    </div>
+
     <script>
         const weatherDescriptions = {
-            0: "Céu limpo", 1: "Algumas nuvens", 2: "Muitas nuvens", 3: "Nublado",
+            0: "Céu limpo", 1: "Algumas nuvens", 2: "Parcialmente nublado", 3: "Nublado",
             45: "Névoa", 48: "Neblina", 51: "Chuvisco fraco", 53: "Chuvisco moderado",
             55: "Chuvisco forte", 56: "Garoa congelante fraca", 57: "Garoa congelante forte",
             61: "Chuva fraca", 63: "Chuva moderada", 65: "Chuva forte", 66: "Chuva congelante fraca",
@@ -232,59 +269,8 @@
             document.getElementById('cards-container').innerHTML = '';
         }
 
-        function createWeatherMenu(hourlyTimes, hourlyCodes, isToday) {
-            const div = document.createElement('div');
-            div.classList.add('weather-details');
-
-            const currentHour = new Date().getHours();
-            for (let i = 0; i < hourlyTimes.length; i++) {
-                const date = new Date(hourlyTimes[i]); // aqui pode manter, pois hourly tem hora
-                const hora = date.getHours();
-                const desc = weatherDescriptions[hourlyCodes[i]] || `Código ${hourlyCodes[i]}`;
-                const p = document.createElement('p');
-                p.innerHTML = `<span><b>${String(hora).padStart(2, '0')}:00</b></span><span style="color: gray;">${desc}</span>`;
-                if (isToday && hora === currentHour) p.classList.add('current-hour');
-                div.appendChild(p);
-            }
-            return div;
-        }
-
-        // animações
-        function openDetails(details, card) {
-            details.classList.add('open');
-            details.style.maxHeight = details.scrollHeight + 'px';
-            requestAnimationFrame(() => {
-                requestAnimationFrame(() => {
-                    const top = card.getBoundingClientRect().top + window.scrollY - 10;
-                    window.scrollTo({ top, behavior: 'smooth' });
-                });
-            });
-            const onEnd = (ev) => {
-                if (ev.propertyName === 'max-height') {
-                    details.style.maxHeight = 'none';
-                    details.removeEventListener('transitionend', onEnd);
-                }
-            };
-            details.addEventListener('transitionend', onEnd);
-        }
-
-        function collapseDetails(details) {
-            if (!details.classList.contains('open')) return;
-            details.style.maxHeight = details.scrollHeight + 'px';
-            void details.offsetHeight;
-            details.style.maxHeight = '0px';
-            details.classList.remove('open');
-            const onEnd = (ev) => {
-                if (ev.propertyName === 'max-height') {
-                    details.style.maxHeight = '';
-                    details.removeEventListener('transitionend', onEnd);
-                }
-            };
-            details.addEventListener('transitionend', onEnd);
-        }
-
         function fetchWeather(lat, lon) {
-            const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weather_code,temperature_2m_max,temperature_2m_min,apparent_temperature_max,apparent_temperature_min,uv_index_clear_sky_max,uv_index_max,sunshine_duration,daylight_duration,sunset,sunrise,rain_sum,showers_sum,snowfall_sum,precipitation_sum,precipitation_hours,precipitation_probability_max,et0_fao_evapotranspiration,shortwave_radiation_sum,wind_direction_10m_dominant,wind_gusts_10m_max,wind_speed_10m_max,relative_humidity_2m_max,relative_humidity_2m_min&hourly=weather_code&timezone=auto&forecast_days=16`;
+            const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weather_code,temperature_2m_max,temperature_2m_min,wind_gusts_10m_max,wind_speed_10m_max,relative_humidity_2m_max,relative_humidity_2m_min,sunrise,sunset,precipitation_sum&hourly=weather_code&timezone=auto&forecast_days=16`;
 
             fetch(apiUrl)
                 .then(res => res.json())
@@ -300,13 +286,11 @@
                     const hojeStr = new Date().toISOString().split('T')[0];
 
                     d.time.forEach((dateStr, idx) => {
-                        // ✅ corrigido: cria Date local sem aplicar UTC
                         const [year, month, day] = dateStr.split("-").map(Number);
                         const dateObj = new Date(year, month - 1, day);
 
                         const nome = dayNames[dateObj.getDay()];
                         const dataFmt = `${String(dateObj.getDate()).padStart(2, '0')}/${String(dateObj.getMonth() + 1).padStart(2, '0')}`;
-                        const isToday = dateStr === hojeStr;
 
                         const tMin = d.temperature_2m_min[idx];
                         const tMax = d.temperature_2m_max[idx];
@@ -318,7 +302,6 @@
                         const nascer = new Date(d.sunrise[idx]).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                         const por = new Date(d.sunset[idx]).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-                        // filtrar horas desse dia
                         const dailyHours = [];
                         const dailyCodes = [];
                         h.time.forEach((t, i) => {
@@ -328,58 +311,77 @@
                             }
                         });
 
-                        // ⚡ novo: detectar trovoadas
                         const riscoTrovoadas = dailyCodes.some(c => [95, 96, 99].includes(c));
 
                         const card = document.createElement('div');
                         card.classList.add('card');
-                        card.setAttribute('data-index', idx);
                         card.innerHTML = `
-                        <p class="dia-data">${nome}, ${dataFmt}</p>
-                        <div class="metricas-linha">
-                            <div class="chuva"><span>☔ Chuva (mm)</span><span>${chuva.toFixed(1)}</span></div>
-                            <div class="temp"><span>🌡️ Temperatura (°C)</span><span>${tMin.toFixed(0)} a ${tMax.toFixed(0)}</span></div>
-                            <div class="vento"><span>🍃 Vento (km/h)</span><span>${Math.round(vento)}</span></div>
-                            <div class="rajadas"><span>🍃 Rajadas (km/h)</span><span>${Math.round(rajada)}</span></div>
-                            <div class="umid"><span>💧 Umidade (%) </span><span>${umidMin} a ${umidMax}</span></div>
-                            <div class="sol"><span>☀️ Sol</span><span>${nascer} / ${por}</span></div>
-                        </div>
-                        ${riscoTrovoadas ? `<p class="alerta">Alerta de trovoadas!</p>` : ""}
-                        ${chuva > 15 ? `<p class="alerta">Alerta de acumulado de chuva!</p>` : ""}
-                        ${umidMin < 30 ? `<p class="alerta">Alerta de baixa umidade do ar!</p>` : ""}
-                    `;
+                            <div class="card-header">
+                                <p class="dia-data">${nome}, ${dataFmt}</p>
+                                <button class="btn-detalhes">Detalhes hora a hora</button>
+                            </div>
+                            <div class="metricas-linha">
+                                <div class="chuva"><span>☔ Chuva (mm)</span><span>${chuva.toFixed(1)}</span></div>
+                                <div class="temp"><span>🌡️ Temperatura (°C)</span><span>${tMin.toFixed(0)} a ${tMax.toFixed(0)}</span></div>
+                                <div class="vento"><span>🍃 Vento (km/h)</span><span>${Math.round(vento)}</span></div>
+                                <div class="rajadas"><span>🍃 Rajadas (km/h)</span><span>${Math.round(rajada)}</span></div>
+                                <div class="umid"><span>💧 Umidade (%) </span><span>${umidMin} a ${umidMax}</span></div>
+                                <div class="sol"><span>☀️ Sol</span><span>${nascer} / ${por}</span></div>
+                            </div>
+                            ${riscoTrovoadas ? `<p class="alerta">Alerta de trovoadas!</p>` : ""}
+                            ${chuva > 15 ? `<p class="alerta">Alerta de acumulado de chuva!</p>` : ""}
+                            ${umidMin < 30 ? `<p class="alerta">Alerta de baixa umidade do ar!</p>` : ""}
+                            ${rajada >= 40 ? `<p class="alerta">Alerta de rajadas de vento!</p>` : ""}
+                        `;
 
-                        const details = createWeatherMenu(dailyHours, dailyCodes, isToday);
-                        card.appendChild(details);
-
-                        card.addEventListener('click', () => {
-                            const isOpen = details.classList.contains('open');
-                            document.querySelectorAll('.weather-details.open').forEach(o => collapseDetails(o));
-
-                            if (isOpen) {
-                                collapseDetails(details);
-                                history.back();
-                            } else {
-                                openDetails(details, card);
-                                history.pushState({ openIndex: idx }, '', `#dia${idx}`);
-                            }
+                        // evento do botão
+                        card.querySelector('.btn-detalhes').addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            openHourlyOverlay(nome, dataFmt, dailyHours, dailyCodes);
                         });
 
                         container.appendChild(card);
                     });
-
-                    window.onpopstate = (event) => {
-                        document.querySelectorAll('.weather-details.open').forEach(o => collapseDetails(o));
-                        if (event.state?.openIndex != null) {
-                            const card = document.querySelector(`.card[data-index="${event.state.openIndex}"]`);
-                            if (card) {
-                                const details = card.querySelector('.weather-details');
-                                openDetails(details, card);
-                            }
-                        }
-                    };
                 });
         }
+
+        // overlay hora a hora
+        function openHourlyOverlay(dia, dataFmt, hourlyTimes, hourlyCodes) {
+            const overlay = document.getElementById('hourly-overlay');
+            const grid = document.getElementById('hourly-grid');
+            const title = document.querySelector('#hourly-content h2');
+            const currentHour = new Date().getHours();
+
+            title.textContent = `${dia}, ${dataFmt}`;
+            grid.innerHTML = "";
+
+            // 4 colunas, cada uma com 6 horas
+            const groups = [[], [], [], []];
+            hourlyTimes.forEach((t, i) => {
+                const d = new Date(t);
+                const h = d.getHours();
+                const desc = weatherDescriptions[hourlyCodes[i]] || `Código ${hourlyCodes[i]}`;
+                const div = document.createElement('div');
+                div.className = 'hour-box';
+                div.innerHTML = `<b>${String(h).padStart(2, '0')}:00</b><br>${desc}`;
+                if (h === currentHour) div.classList.add('current-hour');
+                const col = Math.floor(h / 6);
+                groups[col].push(div);
+            });
+
+            groups.forEach(colHours => {
+                const colDiv = document.createElement('div');
+                colDiv.className = 'hour-column';
+                colHours.forEach(h => colDiv.appendChild(h));
+                grid.appendChild(colDiv);
+            });
+
+            overlay.style.display = 'flex';
+        }
+
+        document.getElementById('close-overlay').addEventListener('click', () => {
+            document.getElementById('hourly-overlay').style.display = 'none';
+        });
 
         function fetchLocationName(lat, lon) {
             const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}&accept-language=pt`;
@@ -404,7 +406,7 @@
                         const lat = d[0].lat, lon = d[0].lon;
                         fetchLocationName(lat, lon);
                         fetchWeather(lat, lon);
-                        document.getElementById('city-input').value = ""; // 🧹 limpa o campo após a busca
+                        document.getElementById('city-input').value = "";
                     } else alert("Cidade não encontrada.");
                 });
         }
@@ -426,7 +428,6 @@
             if (city) searchCity(city);
         });
     </script>
-
 </body>
 
 </html>

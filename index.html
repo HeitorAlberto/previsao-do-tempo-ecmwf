@@ -59,11 +59,11 @@
         }
 
         .cards {
-            display: flex;
-            flex-direction: column;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
             gap: 30px;
             width: 100%;
-            max-width: 900px;
+            max-width: 1000px;
             margin: 0 auto;
         }
 
@@ -79,7 +79,6 @@
             width: 100%;
         }
 
-        /* título + botão */
         .card-header {
             display: flex;
             justify-content: space-between;
@@ -179,7 +178,6 @@
             text-align: center;
         }
 
-        /* Agora as colunas são verticais */
         #hourly-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -200,7 +198,7 @@
         }
 
         .current-hour {
-            background-color: #fff6ca;
+            background-color: #a0d6ff;
         }
 
         #close-overlay {
@@ -214,41 +212,38 @@
             margin: 10px auto 0;
         }
 
-        @media (max-width: 700px) {
+        /* MOBILE: rolagem VERTICAL em vez de carrossel */
+        @media (max-width: 920px) {
             #search-box {
                 flex-direction: column;
             }
 
-            .metricas-linha {
+            .cards {
                 grid-template-columns: 1fr;
-                gap: 8px;
+                gap: 30px;
             }
 
-            /* === Carrossel por página === */
+            #hourly-content {
+                padding: 20px 10px;
+            }
+
             #hourly-grid {
-                display: flex;
-                overflow-x: auto;
-                scroll-snap-type: x mandatory;
-                scroll-behavior: smooth;
-                -webkit-overflow-scrolling: touch;
-                width: 100%;
-                scrollbar-width: none;
-                /* Firefox */
-            }
-
-            /* Esconde a barra de rolagem no celular */
-            #hourly-grid::-webkit-scrollbar {
-                display: none;
+                display: grid;
+                grid-template-columns: 1fr;
+                gap: 10px;
+                overflow-y: auto;
+                max-height: 60vh;
+                padding: 10px;
             }
 
             .hour-column {
-                flex: 0 0 100%;
-                scroll-snap-align: start;
                 display: flex;
                 flex-direction: column;
                 gap: 8px;
+                background: #fff;
+                border-radius: 8px;
+                border: 1px solid black;
                 padding: 10px;
-                box-sizing: border-box;
             }
 
             .hour-box {
@@ -259,28 +254,11 @@
             }
 
             .current-hour {
-                background-color: #fff4be;
+                background-color: #a0d6ff;
             }
 
-            /* Indicadores (agora acima do botão Fechar) */
             #slide-indicators {
-                display: flex;
-                justify-content: center;
-                gap: 6px;
-                margin-top: 15px;
-                margin-bottom: 20px;
-            }
-
-            .indicator-dot {
-                width: 10px;
-                height: 10px;
-                background-color: #ccc;
-                border-radius: 50%;
-                transition: background-color 0.3s;
-            }
-
-            .indicator-dot.active {
-                background-color: #282828;
+                display: none !important;
             }
         }
     </style>
@@ -298,7 +276,7 @@
 
     <div id="cards-container" class="cards"></div>
 
-    <!-- Overlay para detalhes hora a hora -->
+    <!-- Overlay -->
     <div id="hourly-overlay">
         <div id="hourly-content">
             <h2>Detalhes hora a hora</h2>
@@ -369,23 +347,23 @@
                         const card = document.createElement('div');
                         card.classList.add('card');
                         card.innerHTML = `
-                        <div class="card-header">
-                            <p class="dia-data">${nome}, ${dataFmt}</p>
-                            <button class="btn-detalhes">Detalhes hora a hora</button>
-                        </div>
-                        <div class="metricas-linha">
-                            <div class="chuva"><span>☔ Chuva (mm)</span><span>${chuva.toFixed(1)}</span></div>
-                            <div class="temp"><span>🌡️ Temperatura (°C)</span><span>${tMin.toFixed(0)} a ${tMax.toFixed(0)}</span></div>
-                            <div class="vento"><span>🍃 Vento (km/h)</span><span>${Math.round(vento)}</span></div>
-                            <div class="rajadas"><span>🍃 Rajadas (km/h)</span><span>${Math.round(rajada)}</span></div>
-                            <div class="umid"><span>💧 Umidade (%)</span><span>${umidMin} a ${umidMax}</span></div>
-                            <div class="sol"><span>☀️ Sol</span><span>${nascer} / ${por}</span></div>
-                        </div>
-                        ${riscoTrovoadas ? `<p class="alerta">Alerta de trovoadas!</p>` : ""}
-                        ${chuva > 15 ? `<p class="alerta">Alerta de acumulado de chuva!</p>` : ""}
-                        ${umidMin < 30 ? `<p class="alerta">Alerta de baixa umidade do ar!</p>` : ""}
-                        ${rajada >= 40 ? `<p class="alerta">Alerta de rajadas de vento!</p>` : ""}
-                    `;
+                    <div class="card-header">
+                        <p class="dia-data">${nome}, ${dataFmt}</p>
+                        <button class="btn-detalhes">Detalhes hora a hora</button>
+                    </div>
+                    <div class="metricas-linha">
+                        <div class="chuva"><span>☔ Chuva (mm)</span><span>${chuva.toFixed(1)}</span></div>
+                        <div class="temp"><span>🌡️ Temperatura (°C)</span><span>${tMin.toFixed(0)} a ${tMax.toFixed(0)}</span></div>
+                        <div class="vento"><span>🍃 Vento (km/h)</span><span>${Math.round(vento)}</span></div>
+                        <div class="rajadas"><span>🍃 Rajadas (km/h)</span><span>${Math.round(rajada)}</span></div>
+                        <div class="umid"><span>💧 Umidade (%)</span><span>${umidMin} a ${umidMax}</span></div>
+                        <div class="sol"><span>☀️ Sol</span><span>${nascer} / ${por}</span></div>
+                    </div>
+                    ${riscoTrovoadas ? `<p class="alerta">Alerta de trovoadas!</p>` : ""}
+                    ${chuva > 15 ? `<p class="alerta">Alerta de acumulado de chuva!</p>` : ""}
+                    ${umidMin < 30 ? `<p class="alerta">Alerta de baixa umidade do ar!</p>` : ""}
+                    ${rajada >= 40 ? `<p class="alerta">Alerta de rajadas de vento!</p>` : ""}
+                `;
 
                         card.querySelector('.btn-detalhes').addEventListener('click', (e) => {
                             e.stopPropagation();
@@ -397,21 +375,20 @@
                 });
         }
 
-        // === Overlay hora a hora com carrossel e bolinhas ===
         function openHourlyOverlay(dia, dataFmt, hourlyTimes, hourlyCodes) {
             const overlay = document.getElementById('hourly-overlay');
             const grid = document.getElementById('hourly-grid');
             const title = document.querySelector('#hourly-content h2');
             const currentHour = new Date().getHours();
+            const isMobile = window.innerWidth <= 920;
 
             title.textContent = `${dia}, ${dataFmt}`;
             grid.innerHTML = "";
 
-            // Remove indicadores antigos
             const oldIndicators = document.getElementById('slide-indicators');
             if (oldIndicators) oldIndicators.remove();
 
-            // Cria 4 colunas (6h cada)
+            // Cria 4 colunas de 6h
             const groups = [[], [], [], []];
             hourlyTimes.forEach((t, i) => {
                 const d = new Date(t);
@@ -425,6 +402,7 @@
                 groups[col].push(div);
             });
 
+            // Renderiza
             groups.forEach(colHours => {
                 const colDiv = document.createElement('div');
                 colDiv.className = 'hour-column';
@@ -432,27 +410,45 @@
                 grid.appendChild(colDiv);
             });
 
-            // === Indicadores (acima do botão fechar) ===
-            const indicators = document.createElement('div');
-            indicators.id = 'slide-indicators';
-            groups.forEach((_, idx) => {
-                const dot = document.createElement('div');
-                dot.className = 'indicator-dot';
-                if (idx === 0) dot.classList.add('active');
-                indicators.appendChild(dot);
-            });
-
-            const closeBtn = document.getElementById('close-overlay');
-            closeBtn.parentNode.insertBefore(indicators, closeBtn);
-
-            // Atualiza bolinhas conforme o scroll
-            grid.addEventListener('scroll', () => {
-                const colWidth = grid.clientWidth;
-                const index = Math.round(grid.scrollLeft / colWidth);
-                document.querySelectorAll('.indicator-dot').forEach((dot, i) => {
-                    dot.classList.toggle('active', i === index);
+            // Adiciona indicadores somente no desktop
+            if (!isMobile) {
+                const indicators = document.createElement('div');
+                indicators.id = 'slide-indicators';
+                groups.forEach((_, idx) => {
+                    const dot = document.createElement('div');
+                    dot.className = 'indicator-dot';
+                    if (idx === 0) dot.classList.add('active');
+                    indicators.appendChild(dot);
                 });
-            });
+                const closeBtn = document.getElementById('close-overlay');
+                closeBtn.parentNode.insertBefore(indicators, closeBtn);
+
+                grid.addEventListener('scroll', () => {
+                    const colWidth = grid.clientWidth;
+                    const index = Math.round(grid.scrollLeft / colWidth);
+                    document.querySelectorAll('.indicator-dot').forEach((dot, i) => {
+                        dot.classList.toggle('active', i === index);
+                    });
+                });
+            }
+
+            // === NOVO TRECHO: rola automaticamente até o período da hora atual ===
+            const currentGroup = Math.floor(currentHour / 6);
+            setTimeout(() => {
+                if (isMobile) {
+                    // Mobile → rolagem vertical
+                    const target = grid.children[currentGroup];
+                    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                } else {
+                    // Desktop → rolagem horizontal
+                    const colWidth = grid.clientWidth;
+                    grid.scrollTo({ left: currentGroup * colWidth, behavior: 'smooth' });
+                    document.querySelectorAll('.indicator-dot').forEach((dot, i) => {
+                        dot.classList.toggle('active', i === currentGroup);
+                    });
+                }
+            }, 300);
+            // === FIM DO NOVO TRECHO ===
 
             overlay.style.display = 'flex';
         }
@@ -489,6 +485,7 @@
                 });
         }
 
+        // Geolocalização inicial
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(pos => {
                 const { latitude: lat, longitude: lon } = pos.coords;
@@ -501,12 +498,13 @@
             });
         }
 
+        // Botão de busca
         document.getElementById('search-btn').addEventListener('click', () => {
             const city = document.getElementById('city-input').value.trim();
             if (city) searchCity(city);
         });
-    </script>
 
+    </script>
 
 </body>
 

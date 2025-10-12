@@ -362,7 +362,7 @@
                     ${riscoTrovoadas ? `<p class="alerta">Alerta de trovoadas!</p>` : ""}
                     ${chuva > 15 ? `<p class="alerta">Alerta de acumulado de chuva!</p>` : ""}
                     ${umidMin < 30 ? `<p class="alerta">Alerta de baixa umidade do ar!</p>` : ""}
-                    ${rajada >= 40 ? `<p class="alerta">Alerta de rajadas de vento!</p>` : ""}
+                    ${rajada > 40 || rajada == 40 ? `<p class="alerta">Alerta de rajadas de vento!</p>` : ""}
                 `;
 
                         card.querySelector('.btn-detalhes').addEventListener('click', (e) => {

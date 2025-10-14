@@ -360,10 +360,10 @@
                         <div class="rajadas"><span>🍃 Rajadas (km/h)</span><span>${Math.round(rajada)}</span></div>
                         <div class="umid"><span>💧 Umidade (%)</span><span>${umidMin} a ${umidMax}</span></div>
                     </div>
-                    ${riscoTrovoadas ? `<p class="alerta">Alerta de trovoadas!</p>` : ""}
-                    ${chuva > 15 ? `<p class="alerta">Alerta de acumulado de chuva!</p>` : ""}
-                    ${umidMin < 30 ? `<p class="alerta">Alerta de baixa umidade do ar!</p>` : ""}
-                    ${rajada >= 40 ? `<p class="alerta">Alerta de rajadas de vento!</p>` : ""}
+                    ${riscoTrovoadas ? `<p class="alerta">Trovoadas!</p>` : ""}
+                    ${chuva > 15 ? `<p class="alerta">Chuva forte!</p>` : ""}
+                    ${umidMin < 30 ? `<p class="alerta">Baixa umidade do ar!</p>` : ""}
+                    ${rajada >= 40 ? `<p class="alerta">Rajadas de vento!</p>` : ""}
                 `;
 
                         card.querySelector('.btn-detalhes').addEventListener('click', e => {

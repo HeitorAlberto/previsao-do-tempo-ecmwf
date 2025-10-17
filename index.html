@@ -6,16 +6,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Previsão do Tempo</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+
         body {
-            font-family: Arial, Helvetica, sans-serif;
+            font-family: "Inter", sans-serif;
             padding: 20px;
-            background-color: #d8d8d8;
+            background-color: #e3e3e3;
             display: flex;
             flex-direction: column;
             align-items: center;
             margin: 0;
             overflow-x: hidden;
-            /* impede rolagem horizontal no body */
         }
 
         h1 {
@@ -66,14 +67,11 @@
         }
 
         .cards {
-            display: grid;
-            grid-template-columns: 1fr;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
             gap: 30px;
             width: 100%;
-            max-width: 100%;
-            /* ajuste para não gerar scroll no body */
-            margin: 0 auto;
-            box-sizing: border-box;
         }
 
         .card {
@@ -85,9 +83,8 @@
             flex-direction: column;
             gap: 8px;
             box-sizing: border-box;
-            width: 100%;
-            min-width: 0;
-            /* impede overflow interno */
+            width: 800px;
+            max-width: 95%;
         }
 
         .card-header {
@@ -131,7 +128,7 @@
         .vento,
         .rajadas,
         .umid {
-            background-color: #ebebeb;
+            background-color: #ddfaff;
         }
 
         .alerta {
@@ -143,26 +140,16 @@
             color: #eb4848;
         }
 
-        /* CARDS A CADA 3 HORAS */
         .cards-3h-container {
             display: flex;
             gap: 8px;
             overflow-x: auto;
-            /* apenas os cards de 3h rolam */
             padding-bottom: 10px;
             margin-top: 10px;
         }
 
         .cards-3h-container::-webkit-scrollbar {
             display: none;
-            /* oculta barra no Chrome/Safari */
-        }
-
-        .cards-3h-container {
-            scrollbar-width: none;
-            /* Firefox */
-            -ms-overflow-style: none;
-            /* IE 10+ */
         }
 
         .card-3h {
@@ -170,9 +157,9 @@
             min-width: 80px;
             background: #f5f5f5;
             border-radius: 8px;
-            padding: 10px;
+            padding: 10px 20px;
             text-align: center;
-            font-size: 14px;
+            font-size: 20px;
         }
 
         .card-3h b {
@@ -181,15 +168,33 @@
             margin-bottom: 4px;
         }
 
-        /* MOBILE */
+        .card-3h div {
+            margin-bottom: 10px;
+        }
+
+        .card-3h.atual {
+            background: #fff3b0;
+            border: 2px solid #d4af37;
+        }
+
         @media (max-width: 920px) {
+            body {
+                padding: 1px;
+            }
+
             #search-box {
                 flex-direction: column;
+                width: 85%;
+                align-self: center;
+            }
+
+            .card {
+                width: 95%;
             }
 
             .card-3h {
                 min-width: 70px;
-                font-size: 13px;
+                font-size: 20px;
             }
         }
     </style>
@@ -203,6 +208,7 @@
     </div>
     <div id="location">Carregando localização...</div>
     <div id="cards-container" class="cards"></div>
+
     <script>
         const weatherDescriptions = {
             0: "Céu limpo", 1: "Algumas nuvens", 2: "Parcialmente nublado", 3: "Nublado",
@@ -232,7 +238,9 @@
             return codes[0];
         }
 
-        function clearContainer() { document.getElementById('cards-container').innerHTML = ''; }
+        function clearContainer() {
+            document.getElementById('cards-container').innerHTML = '';
+        }
 
         function fetchWeather(lat, lon) {
             const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,weather_code,relative_humidity_2m,precipitation,wind_speed_10m,wind_gusts_10m&models=ecmwf_ifs&forecast_days=14&timezone=auto`;
@@ -279,58 +287,86 @@
                     const card = document.createElement('div');
                     card.classList.add('card');
                     card.innerHTML = `
-                        <div class="card-header"><p class="dia-data">${nome}, ${dataFmt}</p></div>
-                        <div class="metricas-linha">
-                            <div class="chuva"><span>☔ Chuva (mm)</span><span>${chuvaTotal.toFixed(1)}</span></div>
-                            <div class="temp"><span>🌡️ Temperatura (°C)</span><span>${tMin.toFixed(0)} a ${tMax.toFixed(0)}</span></div>
-                            <div class="vento"><span>🍃 Vento (km/h)</span><span>${Math.round(vento)}</span></div>
-                            <div class="rajadas"><span>🍃 Rajadas (km/h)</span><span>${Math.round(rajada)}</span></div>
-                            <div class="umid"><span>💧 Umidade (%)</span><span>${umidMin} a ${umidMax}</span></div>
-                        </div>
-                    `;
+                <div class="card-header"><p class="dia-data">${nome}, ${dataFmt}</p></div>
+                <div class="metricas-linha">
+                    <div class="chuva"><span>☔ Chuva (mm)</span><span>${chuvaTotal.toFixed(1)}</span></div>
+                    <div class="temp"><span>🌡️ Temperatura (°C)</span><span>${tMin.toFixed(0)} a ${tMax.toFixed(0)}</span></div>
+                    <div class="vento"><span>🍃 Vento (km/h)</span><span>${Math.round(vento)}</span></div>
+                    <div class="rajadas"><span>🍃 Rajadas (km/h)</span><span>${Math.round(rajada)}</span></div>
+                    <div class="umid"><span>💧 Umidade (%)</span><span>${umidMin} a ${umidMax}</span></div>
+                </div>
+            `;
 
-                    // CARDS A CADA 3 HORAS
+                    // === CARDS DE 3 HORAS ===
                     const cards3hContainer = document.createElement('div');
                     cards3hContainer.classList.add('cards-3h-container');
+
+                    const hoje = new Date();
+                    const mesmoDia =
+                        dateObj.getFullYear() === hoje.getFullYear() &&
+                        dateObj.getMonth() === hoje.getMonth() &&
+                        dateObj.getDate() === hoje.getDate();
+
+                    let horaAtualIndex = -1;
+
                     for (let i = 0; i < registros.length; i += 3) {
                         const chunk = registros.slice(i, i + 3);
                         const hora = new Date(chunk[0].hora).getHours();
-                        const code = getPriorityWeatherCode(chunk.map(r => r.code));
+
+                        // === NOVO CONTEÚDO: mostra todas as 3 condições ===
+                        const condicoes = chunk.map(r => weatherDescriptions[r.code] || "—");
+
                         const item = document.createElement('div');
                         item.classList.add('card-3h');
-                        item.innerHTML = `<b>${String(hora).padStart(2, '0')}h</b>${weatherDescriptions[code]}`;
+                        item.innerHTML = `
+                    <b>${String(hora).padStart(2, '0')}h</b>
+                    ${condicoes.map(c => `<div>${c}</div>`).join('')}
+                `;
                         cards3hContainer.appendChild(item);
+
+                        // Identifica a hora atual (somente para o dia de hoje)
+                        if (mesmoDia) {
+                            const diff = Math.abs(hora - hoje.getHours());
+                            if (
+                                horaAtualIndex === -1 ||
+                                diff < Math.abs(new Date(registros[horaAtualIndex * 3]?.hora).getHours() - hoje.getHours())
+                            ) {
+                                horaAtualIndex = i / 3;
+                            }
+                        }
                     }
+
                     card.appendChild(cards3hContainer);
 
-                    // ALERTAS no final
-                    if (riscoTrovoadas) card.appendChild(Object.assign(document.createElement('p'), { className: 'alerta', textContent: 'Alerta: Trovoadas!' }));
-                    if (chuvaTotal > 15) card.appendChild(Object.assign(document.createElement('p'), { className: 'alerta', textContent: 'Alerta: Chuva forte!' }));
-                    if (umidMin < 30) card.appendChild(Object.assign(document.createElement('p'), { className: 'alerta', textContent: 'Alerta: Baixa umidade do ar!' }));
-                    if (rajada >= 40) card.appendChild(Object.assign(document.createElement('p'), { className: 'alerta', textContent: 'Alerta: Rajadas de vento!' }));
+                    // === DESTACA E CENTRALIZA ===
+                    if (mesmoDia && horaAtualIndex >= 0) {
+                        setTimeout(() => {
+                            const items = cards3hContainer.querySelectorAll('.card-3h');
+                            const atual = items[horaAtualIndex];
+                            if (atual) {
+                                atual.classList.add('atual');
+                                const containerWidth = cards3hContainer.clientWidth;
+                                const scrollWidth = cards3hContainer.scrollWidth;
+                                const itemLeft = atual.offsetLeft;
+                                const itemWidth = atual.offsetWidth;
+                                let scrollPos = itemLeft - (containerWidth / 2) + (itemWidth / 2);
+                                scrollPos = Math.max(0, Math.min(scrollPos, scrollWidth - containerWidth));
+                                cards3hContainer.scrollTo({ left: scrollPos, behavior: 'smooth' });
+                            }
+                        }, 100);
+                    }
+
+                    // === ALERTAS ===
+                    if (riscoTrovoadas)
+                        card.appendChild(Object.assign(document.createElement('p'), { className: 'alerta', textContent: 'Alerta: Trovoadas!' }));
+                    if (chuvaTotal > 15)
+                        card.appendChild(Object.assign(document.createElement('p'), { className: 'alerta', textContent: 'Alerta: Chuva forte!' }));
+                    if (umidMin < 30)
+                        card.appendChild(Object.assign(document.createElement('p'), { className: 'alerta', textContent: 'Alerta: Baixa umidade do ar!' }));
+                    if (rajada >= 40)
+                        card.appendChild(Object.assign(document.createElement('p'), { className: 'alerta', textContent: 'Alerta: Rajadas de vento!' }));
 
                     container.appendChild(card);
-
-                    // CENTRALIZA HORA ATUAL
-                    setTimeout(() => {
-                        const nowHour = new Date().getHours();
-                        const items = cards3hContainer.querySelectorAll('.card-3h');
-                        let closestIndex = 0;
-                        let minDiff = 24;
-                        Array.from(items).forEach((el, i) => {
-                            const h = parseInt(el.querySelector('b').textContent);
-                            const diff = Math.abs(h - nowHour);
-                            if (diff < minDiff) { minDiff = diff; closestIndex = i; }
-                        });
-                        if (items.length > 0 && cards3hContainer.scrollWidth > cards3hContainer.clientWidth) {
-                            const item = items[closestIndex];
-                            const containerWidth = cards3hContainer.clientWidth;
-                            const itemLeft = item.offsetLeft;
-                            const itemWidth = item.offsetWidth;
-                            const scrollPos = itemLeft - (containerWidth / 2) + (itemWidth / 2);
-                            cards3hContainer.scrollTo({ left: scrollPos, behavior: 'smooth' });
-                        }
-                    }, 50);
                 });
             });
         }
@@ -359,7 +395,6 @@
             });
         }
 
-        // GEOLOCALIZAÇÃO
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(pos => {
                 const { latitude: lat, longitude: lon } = pos.coords;
@@ -377,6 +412,7 @@
             if (city) searchCity(city);
         });
     </script>
+
 </body>
 
 </html>

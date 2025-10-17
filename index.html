@@ -311,22 +311,21 @@
 
                     for (let i = 0; i < registros.length; i += 3) {
                         const chunk = registros.slice(i, i + 3);
-                        const hora = new Date(chunk[0].hora).getHours();
+                        const horaInicial = new Date(chunk[0].hora).getHours();
+                        const horaFinal = (horaInicial + 3) % 24;
 
-                        // === NOVO CONTEÚDO: mostra todas as 3 condições ===
                         const condicoes = chunk.map(r => weatherDescriptions[r.code] || "—");
 
                         const item = document.createElement('div');
                         item.classList.add('card-3h');
                         item.innerHTML = `
-                    <b>${String(hora).padStart(2, '0')}h</b>
+                    <b>${String(horaInicial).padStart(2, '0')}h - ${String(horaFinal).padStart(2, '0')}h</b>
                     ${condicoes.map(c => `<div>${c}</div>`).join('')}
                 `;
                         cards3hContainer.appendChild(item);
 
-                        // Identifica a hora atual (somente para o dia de hoje)
                         if (mesmoDia) {
-                            const diff = Math.abs(hora - hoje.getHours());
+                            const diff = Math.abs(horaInicial - hoje.getHours());
                             if (
                                 horaAtualIndex === -1 ||
                                 diff < Math.abs(new Date(registros[horaAtualIndex * 3]?.hora).getHours() - hoje.getHours())
@@ -338,22 +337,16 @@
 
                     card.appendChild(cards3hContainer);
 
-                    // === DESTACA E CENTRALIZA ===
+                    // === DESTACA O CARD ATUAL E GARANTE VISIBILIDADE NO CANTO ESQUERDO ===
                     if (mesmoDia && horaAtualIndex >= 0) {
-                        setTimeout(() => {
-                            const items = cards3hContainer.querySelectorAll('.card-3h');
-                            const atual = items[horaAtualIndex];
-                            if (atual) {
-                                atual.classList.add('atual');
-                                const containerWidth = cards3hContainer.clientWidth;
-                                const scrollWidth = cards3hContainer.scrollWidth;
-                                const itemLeft = atual.offsetLeft;
-                                const itemWidth = atual.offsetWidth;
-                                let scrollPos = itemLeft - (containerWidth / 2) + (itemWidth / 2);
-                                scrollPos = Math.max(0, Math.min(scrollPos, scrollWidth - containerWidth));
-                                cards3hContainer.scrollTo({ left: scrollPos, behavior: 'smooth' });
-                            }
-                        }, 100);
+                        const items = cards3hContainer.querySelectorAll('.card-3h');
+                        const atual = items[horaAtualIndex];
+                        if (atual) {
+                            atual.classList.add('atual');
+                            setTimeout(() => {
+                                atual.scrollIntoView({ behavior: 'smooth', inline: 'start' });
+                            }, 50);
+                        }
                     }
 
                     // === ALERTAS ===
@@ -411,6 +404,8 @@
             const city = document.getElementById('city-input').value.trim();
             if (city) searchCity(city);
         });
+
+
     </script>
 
 </body>

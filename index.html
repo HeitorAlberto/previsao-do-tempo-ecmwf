@@ -6,7 +6,6 @@
     <title>Previsão do Tempo</title>
     <style>
       @import url("https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap");
-
       body {
         font-family: "Inter", sans-serif;
         padding: 20px;
@@ -17,13 +16,11 @@
         margin: 0;
         overflow-x: hidden;
       }
-
       h1 {
         margin-top: 20px;
         text-align: center;
         font-size: 28px;
       }
-
       #search-box {
         display: flex;
         gap: 5px;
@@ -32,7 +29,6 @@
         width: 100%;
         max-width: 600px;
       }
-
       #search-box input {
         flex: 1;
         font-size: 22px;
@@ -41,13 +37,11 @@
         padding: 8px;
         text-align: center;
       }
-
       input:focus {
         outline: none;
         border: none;
         box-shadow: none;
       }
-
       #search-box button {
         background-color: #282828;
         color: white;
@@ -56,7 +50,6 @@
         padding: 8px 14px;
         cursor: pointer;
       }
-
       #location {
         margin: 30px 0;
         font-size: 22px;
@@ -64,7 +57,6 @@
         text-align: center;
         padding: 10px;
       }
-
       .cards {
         display: flex;
         flex-direction: column;
@@ -72,7 +64,6 @@
         gap: 30px;
         width: 100%;
       }
-
       .card {
         background-color: white;
         border-radius: 8px;
@@ -85,21 +76,18 @@
         width: 800px;
         max-width: 95%;
       }
-
       .card-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
         margin-bottom: 15px;
       }
-
       .dia-data {
         font-weight: bold;
         font-size: 22px;
         text-align: left;
         margin: 0;
       }
-
       .metricas-linha {
         display: grid;
         grid-template-columns: 1fr;
@@ -107,7 +95,6 @@
         font-size: 16px;
         text-align: center;
       }
-
       .metricas-linha > div {
         display: flex;
         justify-content: space-between;
@@ -115,12 +102,10 @@
         font-size: 18px;
         align-items: center;
       }
-
       .metricas-linha > div span:last-child {
         font-weight: bold;
         font-size: 22px;
       }
-
       .chuva,
       .temp,
       .vento,
@@ -128,7 +113,6 @@
       .umid {
         border-bottom: 1px solid lightgray;
       }
-
       .alerta {
         font-size: 18px;
         margin-top: 5px;
@@ -137,19 +121,16 @@
         font-weight: bolder;
         color: #eb4848;
       }
-
       .cards-3h-container {
         display: flex;
         gap: 8px;
         overflow-x: auto;
-        padding-bottom: 10px;
+        padding: 10px 0 10px 12px;
         margin-top: 10px;
       }
-
       .cards-3h-container::-webkit-scrollbar {
         display: none;
       }
-
       .card-3h {
         flex: 0 0 auto;
         min-width: 80px;
@@ -159,37 +140,30 @@
         text-align: center;
         font-size: 20px;
       }
-
       .card-3h b {
         display: block;
         font-size: 16px;
         margin-bottom: 4px;
       }
-
       .card-3h div {
         margin-bottom: 10px;
       }
-
       .card-3h.atual {
         background: #f5f5f5;
         border: 2px solid #000000;
       }
-
       @media (max-width: 920px) {
         body {
           padding: 1px;
         }
-
         #search-box {
           flex-direction: column;
           width: 85%;
           align-self: center;
         }
-
         .card {
           width: 95%;
         }
-
         .card-3h {
           min-width: 70px;
           font-size: 20px;
@@ -197,7 +171,6 @@
       }
     </style>
   </head>
-
   <body>
     <h1>Previsão do Tempo - ECMWF (9 km)</h1>
     <div id="search-box">
@@ -206,7 +179,6 @@
     </div>
     <div id="location">Carregando localização...</div>
     <div id="cards-container" class="cards"></div>
-
     <script>
       const weatherDescriptions = {
         0: "Céu limpo",
@@ -228,7 +200,6 @@
         96: "Tempestade com granizo",
         99: "Tempestade forte com granizo",
       };
-
       const prioridade = {
         tempestade: [95, 96, 99],
         chuva: [51, 53, 55, 61, 63, 65, 80, 81, 82],
@@ -237,11 +208,9 @@
         limpo: [0],
       };
       const dias = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
-
       function limpar() {
         document.getElementById("cards-container").innerHTML = "";
       }
-
       function fetchTempo(lat, lon) {
         const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,weather_code,relative_humidity_2m,precipitation,wind_speed_10m,wind_gusts_10m&models=ecmwf_ifs&forecast_days=14&timezone=auto`;
         fetch(url)
@@ -263,10 +232,8 @@
                 hora: t,
               });
             });
-
             const container = document.getElementById("cards-container");
             const agora = new Date();
-
             for (const [dataStr, regs] of Object.entries(diario)) {
               const [ano, mes, dia] = dataStr.split("-").map(Number);
               const data = new Date(ano, mes - 1, dia);
@@ -284,7 +251,6 @@
               const riscoTrovoadas = regs.some((r) =>
                 prioridade.tempestade.includes(r.code)
               );
-
               const card = document.createElement("div");
               card.className = "card";
               card.innerHTML = `
@@ -305,42 +271,42 @@
           <div class="umid"><span>💧 Umidade (%)</span><span>${umidMin} a ${umidMax}</span></div>
         </div>
       `;
-
-              // === 1h em 1h ===
               const linhaHoras = document.createElement("div");
-              linhaHoras.className = "cards-3h-container"; // mantém estilo horizontal
+              linhaHoras.className = "cards-3h-container";
               const mesmoDia = data.toDateString() === agora.toDateString();
-
               regs.forEach((r) => {
                 const hora = new Date(r.hora).getHours();
                 const item = document.createElement("div");
                 item.className = "card-3h";
-                item.innerHTML = `
-          <b>${String(hora).padStart(2, "0")}h</b>
-          <div>${weatherDescriptions[r.code] || "—"}, ${r.temp.toFixed(
-                  0
-                )}°C</div>
-        `;
+                item.innerHTML = `<b>${String(hora).padStart(
+                  2,
+                  "0"
+                )}h</b><div>${
+                  weatherDescriptions[r.code] || "—"
+                }, ${r.temp.toFixed(0)}°C</div>`;
                 if (mesmoDia && hora === agora.getHours()) {
                   item.classList.add("atual");
-                  // ✅ Scroll suave só dentro do container, sem mover a página
                   setTimeout(() => {
-                    const container = item.closest(".cards-3h-container");
-                    if (container) {
+                    requestAnimationFrame(() => {
+                      const primeiroCard = linhaHoras.firstElementChild;
+                      const margemInicial = primeiroCard
+                        ? primeiroCard.offsetLeft
+                        : 0;
                       const offset =
                         item.offsetLeft -
-                        container.clientWidth / 2 +
-                        item.clientWidth / 2;
-                      container.scrollTo({ left: offset, behavior: "smooth" });
-                    }
-                  }, 300);
+                        linhaHoras.clientWidth / 2 +
+                        item.clientWidth / 2 -
+                        margemInicial;
+                      linhaHoras.scrollTo({
+                        left: Math.max(0, offset),
+                        behavior: "smooth",
+                      });
+                    });
+                  }, 400);
                 }
                 linhaHoras.appendChild(item);
               });
-
               card.appendChild(linhaHoras);
-
-              // === Alertas ===
               const alertas = [];
               if (riscoTrovoadas) alertas.push("Alerta: Trovoadas!");
               if (chuvaTotal > 15) alertas.push("Alerta: Chuva forte!");
@@ -352,12 +318,10 @@
                 p.textContent = txt;
                 card.appendChild(p);
               });
-
               container.appendChild(card);
             }
           });
       }
-
       function fetchLocal(lat, lon) {
         fetch(
           `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}&accept-language=pt`
@@ -372,7 +336,6 @@
               "📌 " + (nome || "Localização desconhecida");
           });
       }
-
       function buscarCidade(cidade) {
         fetch(
           `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(
@@ -388,7 +351,6 @@
             document.getElementById("city-input").value = "";
           });
       }
-
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           (pos) => {
@@ -404,7 +366,6 @@
           }
         );
       }
-
       document.getElementById("search-btn").addEventListener("click", () => {
         const cidade = document.getElementById("city-input").value.trim();
         if (cidade) buscarCidade(cidade);
